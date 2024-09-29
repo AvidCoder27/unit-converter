@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.material.snackbar.Snackbar
 
 private const val TAG = "MainActivity"
 
@@ -49,7 +50,10 @@ class MainActivity : AppCompatActivity() {
             outputValue.text = ""
             conversionSteps.text = ""
             val result = convert()
-            result?.let { Log.e(TAG, "attemptConversion: $it") }
+            result?.let {
+                Snackbar.make(window.decorView, "Error: ${it.message}", Snackbar.LENGTH_LONG).show()
+                Log.e(TAG, "attemptConversion: $it")
+            }
         }
     }
 

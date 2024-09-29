@@ -61,7 +61,7 @@ object UnitStore {
                 }
                 require(compoundUnit is CompoundUnit) { "Non-compound unit used in left side compound definition: ${compoundUnit.singular()}" }
                 compoundUnit.addConstituents(constituentUnits)
-                Log.i("UnitStore", "Loaded compound definition: $definitionString, assigning $compoundUnit size of ${compoundUnit.getSize()}")
+                Log.i("UnitStore", "Loaded compound definition: $definitionString with constituents: ${constituentUnits.map { it.key.singular() to it.value }}")
             }
         }
     }

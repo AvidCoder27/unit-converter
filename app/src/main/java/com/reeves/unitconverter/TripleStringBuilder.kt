@@ -18,12 +18,16 @@ class TripleStringBuilder(private val maxEms: Int) {
         return squashed.toString()
     }
 
-    fun appendConversionStep(step: ConversionStep, finalNewLines: Int) {
+    fun appendConversionStep(step: ConversionStep, exponent: Int, finalNewLines: Int) {
         openParen()
         top.append(step.top())
         bottom.append(step.bottom())
         extend('-')
         closeParen()
+        if (exponent > 1) {
+            top.append(exponent.toString())
+            extend()
+        }
         check(finalNewLines)
     }
 
@@ -47,7 +51,7 @@ class TripleStringBuilder(private val maxEms: Int) {
                 if (index < numerator.size - 1) {
                     numeratorBuilder.append(entry.key.singular())
                     numeratorBuilder.append(entry.value.toSuperscript())
-                    numeratorBuilder.append(" * ")
+                    numeratorBuilder.append(" × ")
                 }
                 else {
                     numeratorBuilder.append(entry.key.plural())
@@ -61,7 +65,7 @@ class TripleStringBuilder(private val maxEms: Int) {
         } else {
             bottom.append(denominator.map {
                 "${it.key.singular()}${it.value.toSuperscript()}"
-            }.joinToString(" * "))
+            }.joinToString(" × "))
             extend('-')
         }
         check(finalNewLines)
@@ -69,13 +73,6 @@ class TripleStringBuilder(private val maxEms: Int) {
 
     fun appendMiddle(any: Any?, finalNewLines: Int) {
         middle.append(any)
-        extend()
-        check(finalNewLines)
-    }
-
-    fun appendExponent(exponent: Int, finalNewLines: Int) {
-        if (exponent < 2) return
-        top.append(exponent.toString())
         extend()
         check(finalNewLines)
     }

@@ -26,7 +26,7 @@ fun Int.toSuperscript(ignore1: Boolean = true): String {
     return this.toString().map { superscriptChars[it] ?: it }.joinToString("")
 }
 
-fun String.parseUnitsToMap(): Map<String, Int> = mutableMapOf<String, Int>().let {
+fun String.parseUnitsToMap(): Map<String, Int> = mutableMapOf<String, Int>().also {
     Regex("([*/]?\\s*(?:\\w+\\s*)+\\^?\\d*)").findAll(this).forEach { matchResult ->
         val term = matchResult.value.trim()
         val parts = term.split("^")
@@ -35,11 +35,18 @@ fun String.parseUnitsToMap(): Map<String, Int> = mutableMapOf<String, Int>().let
         val sign = if (term.startsWith("/")) -1 else 1
         it[unit] = (it[unit] ?: 0) + sign * exponent
     }
-    it
 }
 
-fun Map<SimpleUnit, Int>.foldSize(): Pair<Int, Int> =
-    toList().fold(Pair(0, 0)) { acc, pair -> acc.add(pair.first.getSize().multiply(pair.second)) }
+fun Map<SimpleUnit, Int>.foldSize(): Pair<Int, Int> {
+    var pair = Pair(0, 0)
+    forEach { (unit, count) ->
+        pair = pair.add(
+            if (count > 0) unit.getSize().multiply(count)
+            else unit.getSize().multiply(-count).reciprocate()
+        )
+    }
+    return pair
+}
 
 fun foldTopAndBottom(top: List<SimpleUnit>, bottom: List<SimpleUnit>): Pair<Int, Int> =
     top.foldSize().add(bottom.foldSize().reciprocate())

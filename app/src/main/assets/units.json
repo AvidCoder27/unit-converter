@@ -71,7 +71,9 @@
         "cubic foot, cubic feet, cubic ft",
         "cubic yard|s, cubic yd",
         "cubic mile|s, cubic mi",
-        "cubic meter|s, cubic m"
+        "cubic meter|s, cubic m",
+
+        "newton|s, N"
     ],
     "compound_definitions": [
         "sq in = in^2",
@@ -85,7 +87,9 @@
         "cubic ft = ft^3",
         "cubic yard = yd^3",
         "cubic mile = mile^3",
-        "cubic m = m^3"
+        "cubic m = m^3",
+
+        "newton = kg * m / s^2"
     ],
     "conversions": [
         "1 mol = 6.02214076e23 particles",

@@ -54,12 +54,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getAndValidateInputValue(): Result<Double> = inputValue.text.toString().let {
-        if (it.isBlank()) Result.failure<Double>(Throwable("Input value cannot be empty"))
+        if (it.isBlank()) Result.failure(Throwable("Input value cannot be empty"))
         else Result.success(it.toDouble())
     }
 
     private fun validateUnitCounts(
-        leftTop: List<SimpleUnit>, leftBottom: List<SimpleUnit>, rightTop: List<SimpleUnit>, rightBottom: List<SimpleUnit>
+        leftTop: List<SimpleUnit>,
+        leftBottom: List<SimpleUnit>,
+        rightTop: List<SimpleUnit>,
+        rightBottom: List<SimpleUnit>
     ): Throwable? {
         val left = foldTopAndBottom(leftTop, leftBottom)
         val right = foldTopAndBottom(rightTop, rightBottom)
@@ -103,10 +106,18 @@ class MainActivity : AppCompatActivity() {
         }
         val steps = mutableListOf<ConversionStep>()
         val runningAnswer = RunningAnswer(inputValue)
-        for (path in findPathsBetween(startNumerator.expand(), endNumerator.expand())) {
+        val (startNumeratorCopy, startDenominatorCopy) = recombineNumeratorAndDenominator(
+            startNumerator,
+            startDenominator
+        )
+        val (endNumeratorCopy, endDenominatorCopy) = recombineNumeratorAndDenominator(
+            endNumerator,
+            endDenominator
+        )
+        for (path in findPathsBetween(startNumeratorCopy, endNumeratorCopy)) {
             steps.addPath(path, runningAnswer, false)
         }
-        for (path in findPathsBetween(startDenominator.expand(), endDenominator.expand())) {
+        for (path in findPathsBetween(startDenominatorCopy, endDenominatorCopy)) {
             steps.addPath(path, runningAnswer, true)
         }
 
@@ -126,8 +137,28 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
-    private fun List<SimpleUnit>.expand() : MutableList<SimpleUnit> {
+    private fun recombineNumeratorAndDenominator(
+        n1: List<SimpleUnit>,
+        d1: List<SimpleUnit>
+    ): Pair<MutableList<SimpleUnit>, MutableList<SimpleUnit>> {
+        val n2 = mutableListOf<SimpleUnit>()
+        val d2 = mutableListOf<SimpleUnit>()
+        recombine(n1, n2, d2)
+        recombine(d1, d2, n2)
+        return Pair(n2, d2)
+    }
 
+    private fun recombine(
+        supplier: List<SimpleUnit>,
+        alikeReceiver: MutableList<SimpleUnit>,
+        oppositeReceiver: MutableList<SimpleUnit>
+    ) {
+        supplier.forEach {
+            it.getConstituents().forEach { (unit, count) ->
+                if (count > 0) alikeReceiver.addAll(List(count) { unit })
+                else if (count < 0) oppositeReceiver.addAll(List(-count) { unit })
+            }
+        }
     }
 
     private fun displayOutput(
@@ -150,8 +181,7 @@ class MainActivity : AppCompatActivity() {
             it.appendUnits(startNumerator, startDenominator, 2)
             for ((step, exponent) in steps) {
                 it.appendMiddle(" × ", 2)
-                it.appendConversionStep(step, 2)
-                it.appendExponent(exponent, 2)
+                it.appendConversionStep(step, exponent, 2)
             }
             it.appendMiddle(" = ", 2)
             it.appendValue(answer, 3, 2)
@@ -159,10 +189,10 @@ class MainActivity : AppCompatActivity() {
             it.squishSquash(0)
         }
 
-        Log.i(
+        Log.d(
             TAG, "outputValue.text: \n${outputValue.text}"
         )
-        Log.i(
+        Log.v(
             TAG, "conversionSteps.text:\n${conversionSteps.text}"
         )
     }
@@ -188,17 +218,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun findPathsBetween(
         starts: List<SimpleUnit>, ends: MutableList<SimpleUnit>
-    ) = mutableListOf<List<SimpleUnit>>().let {
+    ) = mutableListOf<List<SimpleUnit>>().also {
         for (start in starts) {
             val shortestPath = findFirstShortestPath(start, ends)
             if (shortestPath.isNotEmpty()) {
                 it.add(shortestPath)
             }
         }
-        it.toList()
-    }
+    }.toList()
 
-    private fun findFirstShortestPath(start: SimpleUnit, ends: MutableList<SimpleUnit>): List<SimpleUnit> {
+    private fun findFirstShortestPath(
+        start: SimpleUnit,
+        ends: MutableList<SimpleUnit>
+    ): List<SimpleUnit> {
         val (parent, distance) = breadthFirstSearch(start)
         for (destination in ends) {
             if (distance.containsKey(destination)) {

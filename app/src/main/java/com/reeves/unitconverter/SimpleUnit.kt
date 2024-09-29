@@ -19,6 +19,8 @@ open class SimpleUnit(private val names: List<String>) {
         return Pair(1, 0)
     }
 
+    open fun getConstituents(): Map<SimpleUnit, Int> = mapOf(this to 1)
+
     fun addConversion(other: SimpleUnit, conversion: Conversion) {
         conversions[other] = conversion
     }

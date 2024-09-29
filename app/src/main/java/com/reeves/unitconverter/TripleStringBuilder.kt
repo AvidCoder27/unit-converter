@@ -34,25 +34,34 @@ class TripleStringBuilder(private val maxEms: Int) {
         check(finalNewLines)
     }
 
-    fun appendUnits(numerator: List<Unit>, denominator: List<Unit>, finalNewLines: Int) {
+    fun appendUnits(numerator: Map<SimpleUnit, Int>, denominator: Map<SimpleUnit, Int>, finalNewLines: Int) {
         val numeratorBuilder =
             if (denominator.isEmpty()) middle
             else top
 
         if (numerator.size == 1) {
-            numeratorBuilder.append(numerator[0].plural())
+            numeratorBuilder.append(numerator.keys.first().plural())
+            numeratorBuilder.append(numerator.values.first().toSuperscript())
         } else {
-            for (i in 0 until numerator.size - 1) {
-                numeratorBuilder.append(numerator[i].singular())
-                numeratorBuilder.append(" * ")
+            numerator.onEachIndexed { index, entry ->
+                if (index < numerator.size - 1) {
+                    numeratorBuilder.append(entry.key.singular())
+                    numeratorBuilder.append(entry.value.toSuperscript())
+                    numeratorBuilder.append(" * ")
+                }
+                else {
+                    numeratorBuilder.append(entry.key.plural())
+                    numeratorBuilder.append(entry.value.toSuperscript())
+                }
             }
-            numeratorBuilder.append(numerator[numerator.size - 1].plural())
         }
 
         if (denominator.isEmpty()) {
             extend()
         } else {
-            bottom.append(denominator.joinToString(" * ") { it.singular() })
+            bottom.append(denominator.map {
+                "${it.key.singular()}${it.value.toSuperscript()}"
+            }.joinToString(" * "))
             extend('-')
         }
         check(finalNewLines)
@@ -64,13 +73,20 @@ class TripleStringBuilder(private val maxEms: Int) {
         check(finalNewLines)
     }
 
+    fun appendExponent(exponent: Int, finalNewLines: Int) {
+        if (exponent < 2) return
+        top.append(exponent.toString())
+        extend()
+        check(finalNewLines)
+    }
+
     /**
      * This will squash if necessary and always squish the un-squished
      * @param finalNewLines the number of lines to append if it has to squash
      */
     private fun check(finalNewLines: Int) {
         // if combining the squished stuff with the un-squished would be too long...
-        if (top.length + squishedTop.length >= maxEms - 5) {
+        if (top.length + squishedTop.length >= maxEms * 0.75) {
             // then we squash the squished
             squash(finalNewLines)
         }

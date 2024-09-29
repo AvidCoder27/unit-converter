@@ -46,29 +46,25 @@ class MainActivity : AppCompatActivity() {
         convertButton.setOnClickListener {
             ViewCompat.getWindowInsetsController(window.decorView)
                 ?.hide(WindowInsetsCompat.Type.ime())
+            outputValue.text = ""
+            conversionSteps.text = ""
             val result = convert()
             result?.let { Log.e(TAG, "attemptConversion: $it") }
         }
     }
 
-    private fun getAndValidateInputValue(): Result<Double> {
-        val inputValueText = inputValue.text.toString()
-        if (inputValueText.isEmpty()) {
-            return Result.failure(Throwable("Input value cannot be empty"))
-        }
-        return Result.success(inputValueText.toDouble())
+    private fun getAndValidateInputValue(): Result<Double> = inputValue.text.toString().let {
+        if (it.isBlank()) Result.failure<Double>(Throwable("Input value cannot be empty"))
+        else Result.success(it.toDouble())
     }
 
     private fun validateUnitCounts(
-        left: List<Unit>,
-        right: List<Unit>,
-        field: String
+        leftTop: List<SimpleUnit>, leftBottom: List<SimpleUnit>, rightTop: List<SimpleUnit>, rightBottom: List<SimpleUnit>
     ): Throwable? {
-        if (left.size > right.size) {
-            return Throwable("Starting $field has more units than ending $field")
-        } else if (left.size < right.size) {
-            return Throwable("Ending $field has more units than starting $field")
-        }
+        val left = foldTopAndBottom(leftTop, leftBottom)
+        val right = foldTopAndBottom(rightTop, rightBottom)
+        Log.i(TAG, "validateUnitCounts: $left, $right")
+        require(left == right) { "Starting and ending units have different sizes" }
         return null
     }
 
@@ -89,56 +85,59 @@ class MainActivity : AppCompatActivity() {
             return Throwable("Numerator cannot be empty")
         }
         val startNumerator = UnitStore.extractUnits(
-            startingNumeratorText,
-            "Starting Numerator",
-            false
+            startingNumeratorText, "Starting Numerator", false
         ).getOrElse { return it }
         val endNumerator = UnitStore.extractUnits(
-            endingNumeratorText,
-            "Ending Numerator",
-            false
+            endingNumeratorText, "Ending Numerator", false
         ).getOrElse { return it }
         val startDenominator = UnitStore.extractUnits(
-            startingDenominatorText,
-            "Starting Denominator",
-            true
+            startingDenominatorText, "Starting Denominator", true
         ).getOrElse { return it }
         val endDenominator = UnitStore.extractUnits(
-            endingDenominatorText,
-            "Ending Denominator",
-            true
+            endingDenominatorText, "Ending Denominator", true
         ).getOrElse { return it }
-        validateUnitCounts(startNumerator, endNumerator, "numerator")?.let { return it }
-        validateUnitCounts(startDenominator, endDenominator, "denominator")?.let { return it }
+        try {
+            validateUnitCounts(startNumerator, startDenominator, endNumerator, endDenominator)
+        } catch (e: IllegalArgumentException) {
+            return e
+        }
         val steps = mutableListOf<ConversionStep>()
         val runningAnswer = RunningAnswer(inputValue)
-        for (path in findPathsBetween(startNumerator, endNumerator.toMutableList())) {
+        for (path in findPathsBetween(startNumerator.expand(), endNumerator.expand())) {
             steps.addPath(path, runningAnswer, false)
         }
-        for (path in findPathsBetween(startDenominator, endDenominator.toMutableList())) {
+        for (path in findPathsBetween(startDenominator.expand(), endDenominator.expand())) {
             steps.addPath(path, runningAnswer, true)
+        }
+
+        if (steps.isEmpty()) {
+            return Throwable("No conversion path found")
         }
 
         displayOutput(
             inputValue,
             runningAnswer.value,
-            steps,
-            startNumerator,
-            startDenominator,
-            endNumerator,
-            endDenominator
+            steps.dedupCount(),
+            startNumerator.dedupCount(),
+            startDenominator.dedupCount(),
+            endNumerator.dedupCount(),
+            endDenominator.dedupCount()
         )
         return null
+    }
+
+    private fun List<SimpleUnit>.expand() : MutableList<SimpleUnit> {
+
     }
 
     private fun displayOutput(
         inputValue: Double,
         answer: Double,
-        steps: MutableList<ConversionStep>,
-        startNumerator: MutableList<Unit>,
-        startDenominator: MutableList<Unit>,
-        endNumerator: MutableList<Unit>,
-        endDenominator: MutableList<Unit>
+        steps: Map<ConversionStep, Int>,
+        startNumerator: Map<SimpleUnit, Int>,
+        startDenominator: Map<SimpleUnit, Int>,
+        endNumerator: Map<SimpleUnit, Int>,
+        endDenominator: Map<SimpleUnit, Int>
     ) {
         outputValue.text = TripleStringBuilder(outputValue.maxEms).let {
             it.appendValue(answer, 3, 1)
@@ -149,9 +148,10 @@ class MainActivity : AppCompatActivity() {
         conversionSteps.text = TripleStringBuilder(conversionSteps.maxEms).let {
             it.appendValue(inputValue, 2, 2)
             it.appendUnits(startNumerator, startDenominator, 2)
-            for (step in steps) {
+            for ((step, exponent) in steps) {
                 it.appendMiddle(" × ", 2)
                 it.appendConversionStep(step, 2)
+                it.appendExponent(exponent, 2)
             }
             it.appendMiddle(" = ", 2)
             it.appendValue(answer, 3, 2)
@@ -168,14 +168,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun MutableList<ConversionStep>.addPath(
-        path: List<Unit>,
-        runningAnswer: RunningAnswer,
-        inverse: Boolean
-    ) {
-        val iterator = path.iterator().peeking()
-        for (unit in iterator) {
+        path: List<SimpleUnit>, runningAnswer: RunningAnswer, inverse: Boolean
+    ) = path.iterator().peeking().let {
+        for (unit in it) {
             val next = try {
-                iterator.peek()
+                it.peek()
             } catch (_: NoSuchElementException) {
                 break
             }
@@ -190,24 +187,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun findPathsBetween(
-        starts: MutableList<Unit>,
-        ends: MutableList<Unit>
-    ): List<List<Unit>> {
-        val paths: MutableList<List<Unit>> = mutableListOf()
+        starts: List<SimpleUnit>, ends: MutableList<SimpleUnit>
+    ) = mutableListOf<List<SimpleUnit>>().let {
         for (start in starts) {
             val shortestPath = findFirstShortestPath(start, ends)
             if (shortestPath.isNotEmpty()) {
-                paths.add(shortestPath)
+                it.add(shortestPath)
             }
         }
-        return paths
+        it.toList()
     }
 
-    private fun findFirstShortestPath(start: Unit, ends: MutableList<Unit>): List<Unit> {
+    private fun findFirstShortestPath(start: SimpleUnit, ends: MutableList<SimpleUnit>): List<SimpleUnit> {
         val (parent, distance) = breadthFirstSearch(start)
         for (destination in ends) {
             if (distance.containsKey(destination)) {
-                val path = mutableListOf<Unit>()
+                val path = mutableListOf<SimpleUnit>()
                 var current = destination
                 path.add(destination)
                 while (parent.containsKey(current)) {
@@ -223,11 +218,11 @@ class MainActivity : AppCompatActivity() {
         return listOf()
     }
 
-    private fun breadthFirstSearch(start: Unit): Pair<HashMap<Unit, Unit>, HashMap<Unit, Int>> {
-        val parent: HashMap<Unit, Unit> = hashMapOf()
-        val distance: HashMap<Unit, Int> = hashMapOf()
+    private fun breadthFirstSearch(start: SimpleUnit): Pair<HashMap<SimpleUnit, SimpleUnit>, HashMap<SimpleUnit, Int>> {
+        val parent: HashMap<SimpleUnit, SimpleUnit> = hashMapOf()
+        val distance: HashMap<SimpleUnit, Int> = hashMapOf()
         distance[start] = 0
-        val queue: ArrayDeque<Unit> = ArrayDeque()
+        val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
         queue.addLast(start)
         while (queue.isNotEmpty()) {
             val node = queue.removeFirst()

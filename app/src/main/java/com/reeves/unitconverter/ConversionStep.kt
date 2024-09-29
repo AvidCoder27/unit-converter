@@ -1,10 +1,7 @@
 package com.reeves.unitconverter
 
 data class ConversionStep(
-    val topValue: Double,
-    val topUnit: Unit,
-    val bottomValue: Double,
-    val bottomUnit: Unit
+    val topValue: Double, val topUnit: SimpleUnit, val bottomValue: Double, val bottomUnit: SimpleUnit
 ) {
     override fun toString(): String {
         return "(${topValue.truncate(2)} $topUnit / ${bottomValue.truncate(2)} $bottomUnit)"

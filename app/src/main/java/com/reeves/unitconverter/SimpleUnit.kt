@@ -1,13 +1,13 @@
 package com.reeves.unitconverter
 
-class Unit(private val names: List<String>) {
+open class SimpleUnit(private val names: List<String>) {
     init {
         require(names.size >= 2) { "Unit must have at least two names, only has `${names[0]}`" }
     }
 
-    private val conversions: HashMap<Unit, Conversion> = hashMapOf()
+    private val conversions: HashMap<SimpleUnit, Conversion> = hashMapOf()
 
-    fun convert(other: Unit, value: RunningAnswer): ConversionStep {
+    fun convert(other: SimpleUnit, value: RunningAnswer): ConversionStep {
         conversions[other]?.let {
             it.apply(value)
             return ConversionStep(it.numerator, other, it.denominator, this)
@@ -15,11 +15,15 @@ class Unit(private val names: List<String>) {
         throw IllegalArgumentException("Cannot convert from `$this` to `$other`")
     }
 
-    fun addConversion(other: Unit, conversion: Conversion) {
+    open fun getSize(): Pair<Int, Int> {
+        return Pair(1, 0)
+    }
+
+    fun addConversion(other: SimpleUnit, conversion: Conversion) {
         conversions[other] = conversion
     }
 
-    fun getConnections(): List<Unit> {
+    fun getConnections(): List<SimpleUnit> {
         return conversions.keys.toList()
     }
 
@@ -37,7 +41,7 @@ class Unit(private val names: List<String>) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Unit) return false
+        if (other !is SimpleUnit) return false
         return this.singular() == other.singular()
     }
 

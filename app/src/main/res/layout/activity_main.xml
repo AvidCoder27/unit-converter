@@ -1,254 +1,264 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/input_value"
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:ems="30"
-        android:hint="Value to convert"
-        android:importantForAutofill="no"
-        android:inputType="numberDecimal|numberSigned"
-        android:minHeight="48dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    <!--Starting units-->
-    <TextView
-        android:id="@+id/starting_units_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Starting Units:"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/input_value" />
+        tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/starting_units_left_paren"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:width="50dp"
-        android:ems="1"
-        android:padding="0dp"
-        android:text="("
-        android:textAlignment="viewStart"
-        android:textSize="100sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
+        <EditText
+            android:id="@+id/input_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:ems="30"
+            android:hint="Value to convert"
+            android:importantForAutofill="no"
+            android:inputType="numberDecimal|numberSigned"
+            android:minHeight="48dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+        <!--Starting units-->
+        <TextView
+            android:id="@+id/starting_units_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="Starting Units:"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/input_value" />
 
-    <TextView
-        android:id="@+id/starting_units_right_paren"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:width="50dp"
-        android:ems="1"
-        android:padding="0dp"
-        android:text=")"
-        android:textAlignment="viewEnd"
-        android:textSize="100sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
+        <TextView
+            android:id="@+id/starting_units_left_paren"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="50dp"
+            android:ems="1"
+            android:padding="0dp"
+            android:text="("
+            android:textAlignment="viewStart"
+            android:textSize="100sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
 
-    <EditText
-        android:id="@+id/starting_numerator"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:ems="30"
-        android:hint="Starting Numerator units"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:textAlignment="center"
-        app:layout_constraintBottom_toBottomOf="@+id/fraction_line_1"
-        app:layout_constraintEnd_toEndOf="@+id/fraction_line_1"
-        app:layout_constraintStart_toStartOf="@+id/fraction_line_1" />
+        <TextView
+            android:id="@+id/starting_units_right_paren"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="50dp"
+            android:ems="1"
+            android:padding="0dp"
+            android:text=")"
+            android:textAlignment="viewEnd"
+            android:textSize="100sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
 
-    <View
-        android:id="@+id/fraction_line_1"
-        android:layout_width="0dp"
-        android:layout_height="4dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="76dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/fraction_line"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
+        <EditText
+            android:id="@+id/starting_numerator"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:ems="30"
+            android:hint="Starting Numerator units"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:textAlignment="center"
+            app:layout_constraintBottom_toBottomOf="@+id/fraction_line_1"
+            app:layout_constraintEnd_toEndOf="@+id/fraction_line_1"
+            app:layout_constraintStart_toStartOf="@+id/fraction_line_1" />
 
-    <EditText
-        android:id="@+id/starting_denominator"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:ems="30"
-        android:hint="Starting Denominator units"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:textAlignment="center"
-        app:layout_constraintEnd_toEndOf="@+id/fraction_line_1"
-        app:layout_constraintStart_toStartOf="@+id/fraction_line_1"
-        app:layout_constraintTop_toTopOf="@+id/fraction_line_1" />
-    <!--Separator-->
-    <View
-        android:id="@+id/starting_to_ending_separator"
-        android:layout_width="0dp"
-        android:layout_height="30dp"
-        android:background="@android:color/transparent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/starting_denominator" />
-    <!--Ending units-->
-    <TextView
-        android:id="@+id/ending_units_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Ending Units:"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/starting_to_ending_separator" />
+        <View
+            android:id="@+id/fraction_line_1"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="76dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/fraction_line"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
 
-    <TextView
-        android:id="@+id/ending_units_left_paren"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:width="50dp"
-        android:ems="1"
-        android:padding="0dp"
-        android:text="("
-        android:textAlignment="viewStart"
-        android:textSize="100sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
+        <EditText
+            android:id="@+id/starting_denominator"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:ems="30"
+            android:hint="Starting Denominator units"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:textAlignment="center"
+            app:layout_constraintEnd_toEndOf="@+id/fraction_line_1"
+            app:layout_constraintStart_toStartOf="@+id/fraction_line_1"
+            app:layout_constraintTop_toTopOf="@+id/fraction_line_1" />
+        <!--Separator-->
+        <View
+            android:id="@+id/starting_to_ending_separator"
+            android:layout_width="0dp"
+            android:layout_height="30dp"
+            android:background="@android:color/transparent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/starting_denominator" />
+        <!--Ending units-->
+        <TextView
+            android:id="@+id/ending_units_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="Ending Units:"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/starting_to_ending_separator" />
 
-    <TextView
-        android:id="@+id/ending_units_right_paren"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:width="50dp"
-        android:ems="1"
-        android:padding="0dp"
-        android:text=")"
-        android:textAlignment="viewEnd"
-        android:textSize="100sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
+        <TextView
+            android:id="@+id/ending_units_left_paren"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="50dp"
+            android:ems="1"
+            android:padding="0dp"
+            android:text="("
+            android:textAlignment="viewStart"
+            android:textSize="100sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
 
-    <EditText
-        android:id="@+id/ending_numerator"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:ems="30"
-        android:hint="Ending Numerator units"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:textAlignment="center"
-        app:layout_constraintBottom_toBottomOf="@+id/fraction_line_2"
-        app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
-        app:layout_constraintStart_toStartOf="@+id/fraction_line_2" />
+        <TextView
+            android:id="@+id/ending_units_right_paren"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="50dp"
+            android:ems="1"
+            android:padding="0dp"
+            android:text=")"
+            android:textAlignment="viewEnd"
+            android:textSize="100sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
 
-    <View
-        android:id="@+id/fraction_line_2"
-        android:layout_width="0dp"
-        android:layout_height="4dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="76dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/fraction_line"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
+        <EditText
+            android:id="@+id/ending_numerator"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:ems="30"
+            android:hint="Ending Numerator units"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:textAlignment="center"
+            app:layout_constraintBottom_toBottomOf="@+id/fraction_line_2"
+            app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
+            app:layout_constraintStart_toStartOf="@+id/fraction_line_2" />
 
-    <EditText
-        android:id="@+id/ending_denominator"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:ems="30"
-        android:hint="Ending Denominator units"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:minHeight="48dp"
-        android:textAlignment="center"
-        app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
-        app:layout_constraintStart_toStartOf="@+id/fraction_line_2"
-        app:layout_constraintTop_toTopOf="@+id/fraction_line_2" />
-    <!--Convert button-->
-    <Button
-        android:id="@+id/convert_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:width="200dp"
-        android:padding="12dp"
-        android:text="Convert"
-        android:textSize="18sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ending_denominator" />
-    <!--Output-->
-    <TextView
-        android:id="@+id/conversion_steps_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Conversion Steps:"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/convert_button" />
+        <View
+            android:id="@+id/fraction_line_2"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="76dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/fraction_line"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
 
-    <TextView
-        android:id="@+id/conversion_steps"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/output_field_background"
-        android:padding="10dp"
-        android:textSize="18sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/conversion_steps_label"
-        tools:text="100 cm * (1 m / 100 cm) = " />
+        <EditText
+            android:id="@+id/ending_denominator"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:ems="30"
+            android:hint="Ending Denominator units"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:textAlignment="center"
+            app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
+            app:layout_constraintStart_toStartOf="@+id/fraction_line_2"
+            app:layout_constraintTop_toTopOf="@+id/fraction_line_2" />
+        <!--Convert button-->
+        <Button
+            android:id="@+id/convert_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:width="200dp"
+            android:padding="12dp"
+            android:text="Convert"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ending_denominator" />
+        <!--Output-->
+        <TextView
+            android:id="@+id/conversion_steps_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="Conversion Steps:"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/output_value" />
 
-    <TextView
-        android:id="@+id/output_value_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Final Output:"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/conversion_steps" />
+        <TextView
+            android:id="@+id/conversion_steps"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/output_field_background"
+            android:fontFamily="monospace"
+            android:maxEms="43"
+            android:padding="10dp"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/conversion_steps_label"
+            tools:text="A123456789B123456789C123456789D12" />
 
-    <TextView
-        android:id="@+id/output_value"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/output_field_background"
-        android:padding="16dp"
-        android:textSize="24sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/output_value_label"
-        tools:text="1 meters" />
+        <TextView
+            android:id="@+id/output_value_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="Final Output:"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/convert_button" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/output_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/output_field_background"
+            android:fontFamily="monospace"
+            android:maxEms="38"
+            android:padding="16dp"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/output_value_label"
+            tools:text="A123456789B123456789C1234567" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

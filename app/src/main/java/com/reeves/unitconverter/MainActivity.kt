@@ -1,5 +1,6 @@
 package com.reeves.unitconverter
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -10,21 +11,26 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
-data class RunningAnswer(var value: Double)
 private const val TAG = "MainActivity"
+
 class MainActivity : AppCompatActivity() {
 
     private val units: MutableList<Unit> = mutableListOf()
     private val unitAliases: HashMap<String, Unit> = HashMap()
 
     init {
-        val meter = createUnit(listOf("meters", "meter", "m"))
-        val kilometer = createUnit(listOf("kilometers", "kilometer", "km"))
-        val foot = createUnit(listOf("feet", "foot", "ft"))
-        val inch = createUnit(listOf("inches", "inch", "in"))
+        val meter = createUnit("meter|s, m")
+        val kilometer = createUnit("kilometer|s, km")
+        val foot = createUnit("foot, feet, ft")
+        val inch = createUnit("inch|es, in")
+        val second = createUnit("second|s, s, sec")
+        val minute = createUnit("minute|s, min|s")
+        val hour = createUnit("hour|s, hr, h")
         createConversion(foot, inch, 1.0, 12.0)
         createConversion(foot, meter, 3.28084, 1.0)
         createConversion(meter, kilometer, 1000.0, 1.0)
+        createConversion(second, minute, 60.0, 1.0)
+        createConversion(minute, hour, 60.0, 1.0)
     }
 
     private lateinit var inputValue: EditText
@@ -55,12 +61,12 @@ class MainActivity : AppCompatActivity() {
         conversionSteps = findViewById(R.id.conversion_steps)
         outputValue = findViewById(R.id.output_value)
 
-        convertButton.setOnClickListener { attemptConversion() }
-    }
-
-    private fun attemptConversion() {
-        val result = convert()
-        result?.let { Log.i(TAG, "attemptConversion: $it") }
+        convertButton.setOnClickListener {
+            ViewCompat.getWindowInsetsController(window.decorView)
+                ?.hide(WindowInsetsCompat.Type.ime())
+            val result = convert()
+            result?.let { Log.e(TAG, "attemptConversion: $it") }
+        }
     }
 
     private fun getAndValidateInputValue(): Result<Double> {
@@ -92,6 +98,11 @@ class MainActivity : AppCompatActivity() {
         val startingDenominatorText = startingDenominator.text.toString()
         val endingDenominatorText = endingDenominator.text.toString()
 
+        Log.i(
+            TAG,
+            "convert: `$inputValue` `$startingNumeratorText` / `$startingDenominatorText` --> `$endingNumeratorText` / `$endingDenominatorText`"
+        )
+
         if (startingNumeratorText.isEmpty() || endingNumeratorText.isEmpty()) {
             return Throwable("Numerator cannot be empty")
         }
@@ -119,26 +130,64 @@ class MainActivity : AppCompatActivity() {
         validateUnitCounts(startDenominator, endDenominator, "denominator")?.let { return it }
         val steps = mutableListOf<ConversionStep>()
         val runningAnswer = RunningAnswer(inputValue)
-        for (path in findPathsBetween(startNumerator, endNumerator)) {
-            addSteps(path, runningAnswer, steps, false)
+        for (path in findPathsBetween(startNumerator, endNumerator.toMutableList())) {
+            steps.addPath(path, runningAnswer, false)
         }
-        for (path in findPathsBetween(startDenominator, endDenominator)) {
-            addSteps(path, runningAnswer, steps, true)
+        for (path in findPathsBetween(startDenominator, endDenominator.toMutableList())) {
+            steps.addPath(path, runningAnswer, true)
         }
-        Log.i(
-            TAG,
-            "convert: `$inputValue` `${startNumerator}` / `${startDenominator}` to `${runningAnswer.value}` `${endNumerator}` / `${endDenominator}`"
+        displayOutput(
+            inputValue,
+            runningAnswer.value,
+            steps,
+            startNumerator,
+            startDenominator,
+            endNumerator,
+            endDenominator
         )
         return null
     }
 
-    private fun addSteps(
+    @SuppressLint("SetTextI18n")
+    private fun displayOutput(
+        inputValue: Double,
+        answer: Double,
+        steps: MutableList<ConversionStep>,
+        startNumerator: MutableList<Unit>,
+        startDenominator: MutableList<Unit>,
+        endNumerator: MutableList<Unit>,
+        endDenominator: MutableList<Unit>
+    ) {
+        outputValue.text = TripleStringBuilder(outputValue.maxEms / 2).let {
+            it.appendValue(answer, 3)
+            it.checkForSquish(1)
+            it.appendUnits(endNumerator, endDenominator)
+            it.squish(0)
+        }
+
+        conversionSteps.text = TripleStringBuilder(conversionSteps.maxEms / 2).let {
+            it.appendValue(inputValue, 2)
+            it.checkForSquish(2)
+            it.appendUnits(startNumerator, startDenominator)
+            it.checkForSquish(2)
+            for (step in steps) {
+                it.appendMiddle(" × ")
+                it.appendConversionStep(step)
+                it.checkForSquish(2)
+            }
+            it.appendMiddle(" = ")
+            it.appendValue(answer, 3)
+            it.checkForSquish(2)
+            it.appendUnits(endNumerator, endDenominator)
+            it.squish(0)
+        }
+    }
+
+    private fun MutableList<ConversionStep>.addPath(
         path: List<Unit>,
         runningAnswer: RunningAnswer,
-        steps: MutableList<ConversionStep>,
         inverse: Boolean
     ) {
-        val steps = mutableListOf<ConversionStep>()
         val iterator = path.iterator().peeking()
         for (unit in iterator) {
             val next = try {
@@ -146,11 +195,13 @@ class MainActivity : AppCompatActivity() {
             } catch (_: NoSuchElementException) {
                 break
             }
-            steps.add(if (inverse) {
-                next.convert(unit, runningAnswer)
-            } else {
-                unit.convert(next, runningAnswer)
-            })
+            add(
+                if (inverse) {
+                    next.convert(unit, runningAnswer)
+                } else {
+                    unit.convert(next, runningAnswer)
+                }
+            )
         }
     }
 
@@ -218,7 +269,7 @@ class MainActivity : AppCompatActivity() {
             }
             return Result.failure(Throwable("$field cannot be empty"))
         }
-        val substrings = text.split("*").map { it.trim() }
+        val substrings = text.split('*', ',').map { it.lowercase().trim() }
         val units = mutableListOf<Unit>()
         for (str in substrings) {
             units.add(
@@ -229,44 +280,25 @@ class MainActivity : AppCompatActivity() {
         return Result.success(units)
     }
 
-    private fun createUnit(names: List<String>): Unit {
-        val unit = Unit(names)
-        units.add(unit)
-        unit.getNames().forEach {
-            unitAliases[it] = unit
+    private fun createUnit(names: String): Unit {
+        val namesList = mutableListOf<String>()
+        for (name in names.split(",")) {
+            val chunks = name.trim().lowercase().split('|')
+            val builder = StringBuilder()
+            for (chunk in chunks) {
+                builder.append(chunk)
+                namesList.add(builder.toString())
+            }
         }
+        val unit = Unit(namesList)
+        units.add(unit)
+        namesList.forEach { unitAliases[it] = unit }
         return unit
     }
 
     private fun createConversion(from: Unit, to: Unit, fromValue: Double, toValue: Double) {
-        val conversion = Conversion(fromValue, toValue)
+        val conversion = Conversion(toValue, fromValue)
         from.addConversion(to, conversion)
         to.addConversion(from, conversion.inverse())
     }
-
-    interface PeekingIterator<T> : Iterator<T> {
-        fun peek(): T
-    }
-
-    fun <T> Iterator<T>.peeking(): PeekingIterator<T> =
-        if (this is PeekingIterator)
-            this
-        else
-            object : PeekingIterator<T> {
-                private var cached = false
-
-                @Suppress("UNCHECKED_CAST")
-                private var element: T = null as T
-                    get() {
-                        if (!cached)
-                            field = this@peeking.next()
-                        return field
-                    }
-
-                override fun hasNext(): Boolean = cached || this@peeking.hasNext()
-
-                override fun next(): T = element.also { cached = false }
-
-                override fun peek(): T = element.also { cached = true }
-            }
 }

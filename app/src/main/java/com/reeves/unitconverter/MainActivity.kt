@@ -1,6 +1,5 @@
 package com.reeves.unitconverter
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -14,25 +13,6 @@ import androidx.core.view.WindowInsetsCompat
 private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
-
-    private val units: MutableList<Unit> = mutableListOf()
-    private val unitAliases: HashMap<String, Unit> = HashMap()
-
-    init {
-        val meter = createUnit("meter|s, m")
-        val kilometer = createUnit("kilometer|s, km")
-        val foot = createUnit("foot, feet, ft")
-        val inch = createUnit("inch|es, in")
-        val second = createUnit("second|s, s, sec")
-        val minute = createUnit("minute|s, min|s")
-        val hour = createUnit("hour|s, hr, h")
-        createConversion(foot, inch, 1.0, 12.0)
-        createConversion(foot, meter, 3.28084, 1.0)
-        createConversion(meter, kilometer, 1000.0, 1.0)
-        createConversion(second, minute, 60.0, 1.0)
-        createConversion(minute, hour, 60.0, 1.0)
-    }
-
     private lateinit var inputValue: EditText
     private lateinit var startingNumerator: EditText
     private lateinit var startingDenominator: EditText
@@ -60,6 +40,8 @@ class MainActivity : AppCompatActivity() {
         convertButton = findViewById(R.id.convert_button)
         conversionSteps = findViewById(R.id.conversion_steps)
         outputValue = findViewById(R.id.output_value)
+
+        UnitStore.loadUnitsFromJson(this)
 
         convertButton.setOnClickListener {
             ViewCompat.getWindowInsetsController(window.decorView)
@@ -106,22 +88,22 @@ class MainActivity : AppCompatActivity() {
         if (startingNumeratorText.isEmpty() || endingNumeratorText.isEmpty()) {
             return Throwable("Numerator cannot be empty")
         }
-        val startNumerator = extractUnits(
+        val startNumerator = UnitStore.extractUnits(
             startingNumeratorText,
             "Starting Numerator",
             false
         ).getOrElse { return it }
-        val endNumerator = extractUnits(
+        val endNumerator = UnitStore.extractUnits(
             endingNumeratorText,
             "Ending Numerator",
             false
         ).getOrElse { return it }
-        val startDenominator = extractUnits(
+        val startDenominator = UnitStore.extractUnits(
             startingDenominatorText,
             "Starting Denominator",
             true
         ).getOrElse { return it }
-        val endDenominator = extractUnits(
+        val endDenominator = UnitStore.extractUnits(
             endingDenominatorText,
             "Ending Denominator",
             true
@@ -136,6 +118,7 @@ class MainActivity : AppCompatActivity() {
         for (path in findPathsBetween(startDenominator, endDenominator.toMutableList())) {
             steps.addPath(path, runningAnswer, true)
         }
+
         displayOutput(
             inputValue,
             runningAnswer.value,
@@ -148,7 +131,6 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
-    @SuppressLint("SetTextI18n")
     private fun displayOutput(
         inputValue: Double,
         answer: Double,
@@ -158,29 +140,31 @@ class MainActivity : AppCompatActivity() {
         endNumerator: MutableList<Unit>,
         endDenominator: MutableList<Unit>
     ) {
-        outputValue.text = TripleStringBuilder(outputValue.maxEms / 2).let {
-            it.appendValue(answer, 3)
-            it.checkForSquish(1)
-            it.appendUnits(endNumerator, endDenominator)
-            it.squish(0)
+        outputValue.text = TripleStringBuilder(outputValue.maxEms).let {
+            it.appendValue(answer, 3, 1)
+            it.appendUnits(endNumerator, endDenominator, 0)
+            it.squishSquash(0)
         }
 
-        conversionSteps.text = TripleStringBuilder(conversionSteps.maxEms / 2).let {
-            it.appendValue(inputValue, 2)
-            it.checkForSquish(2)
-            it.appendUnits(startNumerator, startDenominator)
-            it.checkForSquish(2)
+        conversionSteps.text = TripleStringBuilder(conversionSteps.maxEms).let {
+            it.appendValue(inputValue, 2, 2)
+            it.appendUnits(startNumerator, startDenominator, 2)
             for (step in steps) {
-                it.appendMiddle(" × ")
-                it.appendConversionStep(step)
-                it.checkForSquish(2)
+                it.appendMiddle(" × ", 2)
+                it.appendConversionStep(step, 2)
             }
-            it.appendMiddle(" = ")
-            it.appendValue(answer, 3)
-            it.checkForSquish(2)
-            it.appendUnits(endNumerator, endDenominator)
-            it.squish(0)
+            it.appendMiddle(" = ", 2)
+            it.appendValue(answer, 3, 2)
+            it.appendUnits(endNumerator, endDenominator, 2)
+            it.squishSquash(0)
         }
+
+        Log.i(
+            TAG, "outputValue.text: \n${outputValue.text}"
+        )
+        Log.i(
+            TAG, "conversionSteps.text:\n${conversionSteps.text}"
+        )
     }
 
     private fun MutableList<ConversionStep>.addPath(
@@ -256,49 +240,5 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return Pair(parent, distance)
-    }
-
-    private fun extractUnits(
-        text: String,
-        field: String,
-        allowEmpty: Boolean
-    ): Result<MutableList<Unit>> {
-        if (text.isEmpty()) {
-            if (allowEmpty) {
-                return Result.success(mutableListOf())
-            }
-            return Result.failure(Throwable("$field cannot be empty"))
-        }
-        val substrings = text.split('*', ',').map { it.lowercase().trim() }
-        val units = mutableListOf<Unit>()
-        for (str in substrings) {
-            units.add(
-                unitAliases[str]
-                    ?: return Result.failure(Throwable("$field contains invalid units"))
-            )
-        }
-        return Result.success(units)
-    }
-
-    private fun createUnit(names: String): Unit {
-        val namesList = mutableListOf<String>()
-        for (name in names.split(",")) {
-            val chunks = name.trim().lowercase().split('|')
-            val builder = StringBuilder()
-            for (chunk in chunks) {
-                builder.append(chunk)
-                namesList.add(builder.toString())
-            }
-        }
-        val unit = Unit(namesList)
-        units.add(unit)
-        namesList.forEach { unitAliases[it] = unit }
-        return unit
-    }
-
-    private fun createConversion(from: Unit, to: Unit, fromValue: Double, toValue: Double) {
-        val conversion = Conversion(toValue, fromValue)
-        from.addConversion(to, conversion)
-        to.addConversion(from, conversion.inverse())
     }
 }

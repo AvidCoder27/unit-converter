@@ -2,7 +2,7 @@ package com.reeves.unitconverter
 
 class Unit(private val names: List<String>) {
     init {
-        require(names.size >= 2)
+        require(names.size >= 2) { "Unit must have at least two names, only has `${names[0]}`" }
     }
 
     private val conversions: HashMap<Unit, Conversion> = hashMapOf()
@@ -10,7 +10,7 @@ class Unit(private val names: List<String>) {
     fun convert(other: Unit, value: RunningAnswer): ConversionStep {
         conversions[other]?.let {
             it.apply(value)
-            return ConversionStep(it.numerator, this, it.denominator, other)
+            return ConversionStep(it.numerator, other, it.denominator, this)
         }
         throw IllegalArgumentException("Cannot convert from `$this` to `$other`")
     }

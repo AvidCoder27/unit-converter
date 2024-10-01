@@ -3,25 +3,54 @@ package com.reeves.unitconverter
 import android.content.Context
 import android.util.Log
 import org.json.JSONObject
+import kotlin.math.min
 
 object UnitStore {
-    private val unitAliases: HashMap<String, SimpleUnit> = HashMap()
+    private val unitNames: HashMap<String, SimpleUnit> = HashMap()
+    private val aliases: HashMap<String, Quantity> = HashMap()
+    private val units: MutableList<SimpleUnit> = mutableListOf()
+    private val conversions: MutableList<Conversion> = mutableListOf()
 
-    fun loadUnitsFromJson(context: Context) {
+    fun loadFromJson(context: Context) {
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
         val jsonObject = JSONObject(jsonString)
 
         jsonObject.getJSONArray("units").let { array ->
             for (i in 0 until array.length()) {
-                val unitString = array.getString(i)
-                createUnit(unitString)
+                val alikeUnitsArray = array.getJSONArray(i)
+                val dimensionality: Map<DIMENSION, Int> =
+                    alikeUnitsArray.getString(0).parseUnitsToStringMap().mapKeys {
+                        when (it.key) {
+                            "d" -> DIMENSION.LENGTH
+                            "t" -> DIMENSION.TIME
+                            "T" -> DIMENSION.TEMPERATURE
+                            "m" -> DIMENSION.MASS
+                            "I" -> DIMENSION.ELECTRIC_CURRENT
+                            "n" -> DIMENSION.AMOUNT_OF_SUBSTANCE
+                            "L" -> DIMENSION.LUMINOUS_INTENSITY
+                            "r" -> DIMENSION.ROTATION
+                            else -> throw Exception("Invalid dimension when loading units")
+                        }
+                    }
+                for (j in 1 until alikeUnitsArray.length()) {
+                    val names = extractNames(alikeUnitsArray.getString(j))
+                    val unit = SimpleUnit(names, dimensionality)
+                    for (name in names) {
+                        unitNames[name] = unit
+                    }
+                    units.add(unit)
+                }
             }
         }
 
-        jsonObject.getJSONArray("compound_units").let { array ->
+        jsonObject.getJSONArray("aliases").let { array ->
             for (i in 0 until array.length()) {
-                val unitString = array.getString(i)
-                createUnit(unitString, true)
+                val aliasString = array.getString(i).lowercase()
+                val equalParts = splitConversionByEquals(aliasString)
+                val quantity = equalParts[1].intoQuantity()
+                for (alias in extractNames(equalParts[0])) {
+                    aliases[alias] = quantity
+                }
             }
         }
 
@@ -29,39 +58,46 @@ object UnitStore {
             for (i in 0 until array.length()) {
                 val conversionString = array.getString(i).lowercase()
                 val equalParts = splitConversionByEquals(conversionString)
-                val unit1Parts = equalParts[0].split(" ", limit = 2).map { it.trim() }
-                val unit2Parts = equalParts[1].split(" ", limit = 2).map { it.trim() }
-                require(unit1Parts.size == 2 && unit2Parts.size == 2) { "Invalid conversion: `$conversionString` has unit1Parts.size = ${unit1Parts.size} and unit2Parts.size = ${unit2Parts.size}" }
-                try {
-                    createConversion(
-                        unitAliases[unit1Parts[1]]!!,
-                        unitAliases[unit2Parts[1]]!!,
-                        unit1Parts[0].toDouble(),
-                        unit2Parts[0].toDouble()
-                    )
-                } catch (_: NullPointerException) {
-                    throw Exception("Invalid unit in conversion: $conversionString")
-                } catch (_: NumberFormatException) {
-                    throw NumberFormatException("Invalid number in conversion: $conversionString")
+                val conversion =
+                    Conversion(equalParts[0].intoQuantity(), equalParts[1].intoQuantity())
+                conversion.getLonelies().let { (numerator, denominator) ->
+                    numerator?.addConversion(conversion)
+                    denominator?.addConversion(conversion)
+                    conversions.add(conversion)
+                    conversion.denominator.forEach {
+                        it.key.addConnection(conversion.numerator)
+                    }
+                    conversion.numerator.forEach {
+                        it.key.addConnection(conversion.denominator)
+                    }
                 }
             }
         }
 
-        jsonObject.getJSONArray("compound_definitions").let { array ->
-            for (i in 0 until array.length()) {
-                val definitionString = array.getString(i).lowercase()
-                val equalParts = splitConversionByEquals(definitionString)
-                val (compoundUnit, constituentUnits) = try {
-                    Pair(
-                        unitAliases[equalParts[0]]!!,
-                        equalParts[1].parseUnitsToMap().mapKeys { unitAliases[it.key.trim()]!! }
-                    )
-                } catch (_: NullPointerException) {
-                    throw Exception("Invalid unit in compound definition: $definitionString")
-                }
-                require(compoundUnit is CompoundUnit) { "Non-compound unit used in left side compound definition: ${compoundUnit.singular()}" }
-                compoundUnit.addConstituents(constituentUnits)
-                Log.i("UnitStore", "Loaded compound definition: $definitionString with constituents: ${constituentUnits.map { it.key.singular() to it.value }}")
+        setOf(
+            "m", "s", "K", "kg", "A", "mol", "cd", "rotation"
+        ).forEach { name ->
+            val fundamental = getUnit(name).keys.first()
+            fundamental.complexity = 0
+            val (_, distance) = breadthFirstSearch(fundamental) { unit ->
+                unit.getConnections().flatMap { it.units.keys }
+            }
+            distance.forEach { (unit, distance) ->
+                unit.complexity = min(unit.complexity, distance)
+            }
+        }
+
+        units.sortedBy { it.complexity }.reversed().forEach {
+            Log.i("UnitStore", "${it.singular()}: ${it.complexity}")
+        }
+    }
+
+    private fun extractNames(input: String) = mutableListOf<String>().also { names ->
+        input.split(",").forEach { name ->
+            val builder = StringBuilder()
+            for (chunk in name.trim().lowercase().split('|')) {
+                builder.append(chunk)
+                names.add(builder.toString())
             }
         }
     }
@@ -72,47 +108,34 @@ object UnitStore {
             return it
         }
 
-    fun extractUnits(
-        text: String,
-        field: String,
-        allowEmpty: Boolean
-    ): Result<MutableList<SimpleUnit>> {
-        if (text.isEmpty()) {
-            if (allowEmpty) {
-                return Result.success(mutableListOf())
-            }
-            return Result.failure(Throwable("$field cannot be empty"))
-        }
-        val substrings = text.split('*', ',').map { it.lowercase().trim() }
-        val units = mutableListOf<SimpleUnit>()
-        for (str in substrings) {
-            units.add(
-                unitAliases[str]
-                    ?: return Result.failure(Throwable("$field contains invalid units"))
-            )
-        }
-        return Result.success(units)
+    /**
+     * For a name of a SimpleUnit, this will just return a mapOf(it to 1)
+     * So for those you can just take
+     * @return the unit or alias with the given name as a map of SimpleUnits to their exponents
+     * @throws UndefinedUnitException if the unit is not defined as a unit or an alias
+     */
+    fun getUnit(name: String): Map<SimpleUnit, Int> {
+        unitNames[name.lowercase()]?.let { return mapOf(it to 1) }
+        aliases[name.lowercase()]?.let { return it.units }
+        throw UndefinedUnitException(name)
     }
 
-    private fun createUnit(names: String, compound: Boolean = false): SimpleUnit {
-        val namesList = mutableListOf<String>()
-        for (name in names.split(",")) {
-            val chunks = name.trim().lowercase().split('|')
-            val builder = StringBuilder()
-            for (chunk in chunks) {
-                builder.append(chunk)
-                namesList.add(builder.toString())
-            }
-        }
-
-        val unit = if (compound) CompoundUnit(namesList) else SimpleUnit(namesList)
-        namesList.forEach { unitAliases[it] = unit }
-        return unit
-    }
-
-    private fun createConversion(from: SimpleUnit, to: SimpleUnit, fromValue: Double, toValue: Double) {
-        val conversion = Conversion(toValue, fromValue)
-        from.addConversion(to, conversion)
-        to.addConversion(from, conversion.inverse())
-    }
+    /**
+     * For any quantity, this function will return a quantity that has units equivalent to the input
+     * but all units will be from the fundamental base units (meter for length, second for time, etc.)
+     *
+     * **HOWEVER,** the value on the returned quantity will not be equivalent; it will just be 1
+     */
+    fun Quantity.asFundamental() = Quantity(1.0, dimensionality().mapKeys {
+        when (it.key) {
+            DIMENSION.LENGTH -> getUnit("meter")
+            DIMENSION.TIME -> getUnit("second")
+            DIMENSION.TEMPERATURE -> getUnit("kelvin")
+            DIMENSION.MASS -> getUnit("kilogram")
+            DIMENSION.ELECTRIC_CURRENT -> getUnit("ampere")
+            DIMENSION.AMOUNT_OF_SUBSTANCE -> getUnit("mole")
+            DIMENSION.LUMINOUS_INTENSITY -> getUnit("candela")
+            DIMENSION.ROTATION -> getUnit("rotation")
+        }.keys.first()
+    })
 }

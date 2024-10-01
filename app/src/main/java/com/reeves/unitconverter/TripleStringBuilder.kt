@@ -18,10 +18,10 @@ class TripleStringBuilder(private val maxEms: Int) {
         return squashed.toString()
     }
 
-    fun appendConversionStep(step: ConversionStep, exponent: Int, finalNewLines: Int) {
+    fun appendConversion(step: Conversion, exponent: Int, finalNewLines: Int) {
         openParen()
-        top.append(step.top())
-        bottom.append(step.bottom())
+        top.append(step.numerator.stringifyTop())
+        bottom.append(step.denominator.stringifyTop())
         extend('-')
         closeParen()
         if (exponent > 1) {
@@ -31,6 +31,14 @@ class TripleStringBuilder(private val maxEms: Int) {
         check(finalNewLines)
     }
 
+    private fun Quantity.stringifyTop() = buildString {
+        append(value.truncate(2))
+        append(' ')
+        append(top().toList().joinToString("×") { (unit, count) ->
+            unit.abbreviation() + count.toSuperscript()
+        })
+    }
+
     fun appendValue(value: Double, precision: Int, finalNewLines: Int) {
         middle.append(value.truncate(precision))
         middle.append(' ')
@@ -38,10 +46,11 @@ class TripleStringBuilder(private val maxEms: Int) {
         check(finalNewLines)
     }
 
-    fun appendUnits(numerator: Map<SimpleUnit, Int>, denominator: Map<SimpleUnit, Int>, finalNewLines: Int) {
-        val numeratorBuilder =
-            if (denominator.isEmpty()) middle
-            else top
+    fun appendUnits(quantity: Quantity, finalNewLines: Int) {
+        val numerator = quantity.top()
+        val denominator = quantity.bottom()
+        val numeratorBuilder = if (denominator.isEmpty()) middle
+        else top
 
         if (numerator.size == 1) {
             numeratorBuilder.append(numerator.keys.first().plural())
@@ -52,8 +61,7 @@ class TripleStringBuilder(private val maxEms: Int) {
                     numeratorBuilder.append(entry.key.singular())
                     numeratorBuilder.append(entry.value.toSuperscript())
                     numeratorBuilder.append(" × ")
-                }
-                else {
+                } else {
                     numeratorBuilder.append(entry.key.plural())
                     numeratorBuilder.append(entry.value.toSuperscript())
                 }

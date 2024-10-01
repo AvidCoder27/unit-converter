@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
+import com.reeves.unitconverter.UnitStore.asFundamental
 
 private const val TAG = "MainActivity"
 
@@ -42,154 +43,155 @@ class MainActivity : AppCompatActivity() {
         conversionSteps = findViewById(R.id.conversion_steps)
         outputValue = findViewById(R.id.output_value)
 
-        UnitStore.loadUnitsFromJson(this)
+        UnitStore.loadFromJson(this)
 
         convertButton.setOnClickListener {
-            ViewCompat.getWindowInsetsController(window.decorView)
+            @Suppress("DEPRECATION") ViewCompat.getWindowInsetsController(window.decorView)
                 ?.hide(WindowInsetsCompat.Type.ime())
             outputValue.text = ""
             conversionSteps.text = ""
-            val result = convert()
-            result?.let {
-                Snackbar.make(window.decorView, "Error: ${it.message}", Snackbar.LENGTH_LONG).show()
-                Log.e(TAG, "attemptConversion: $it")
+            try {
+                convert()
+            } catch (e: Exception) {
+                when (e) {
+                    is InvalidUnitsException, is UndefinedUnitException, is ImpossibleConversionException, is MeaninglessConversionException, is PromotionRequiredException -> {
+                        Snackbar.make(window.decorView, "Error: ${e.message}", Snackbar.LENGTH_LONG)
+                            .show()
+                        Log.e(TAG, "attemptConversion: $e")
+                    }
+
+                    else -> throw e
+                }
             }
         }
     }
 
-    private fun getAndValidateInputValue(): Result<Double> = inputValue.text.toString().let {
-        if (it.isBlank()) Result.failure(Throwable("Input value cannot be empty"))
-        else Result.success(it.toDouble())
-    }
-
-    private fun validateUnitCounts(
-        leftTop: List<SimpleUnit>,
-        leftBottom: List<SimpleUnit>,
-        rightTop: List<SimpleUnit>,
-        rightBottom: List<SimpleUnit>
-    ): Throwable? {
-        val left = foldTopAndBottom(leftTop, leftBottom)
-        val right = foldTopAndBottom(rightTop, rightBottom)
-        Log.i(TAG, "validateUnitCounts: $left, $right")
-        require(left == right) { "Starting and ending units have different sizes" }
-        return null
-    }
-
-    private fun convert(): Throwable? {
-        val inputValue = getAndValidateInputValue().getOrElse { return it }
-
-        val startingNumeratorText = startingNumerator.text.toString()
-        val endingNumeratorText = endingNumerator.text.toString()
-        val startingDenominatorText = startingDenominator.text.toString()
-        val endingDenominatorText = endingDenominator.text.toString()
-
-        Log.i(
-            TAG,
-            "convert: `$inputValue` `$startingNumeratorText` / `$startingDenominatorText` --> `$endingNumeratorText` / `$endingDenominatorText`"
-        )
-
-        if (startingNumeratorText.isEmpty() || endingNumeratorText.isEmpty()) {
-            return Throwable("Numerator cannot be empty")
+    private fun convert() {
+        val inputValue = try {
+            inputValue.text.toString().toDouble()
+        } catch (_: NumberFormatException) {
+            1.0
         }
-        val startNumerator = UnitStore.extractUnits(
-            startingNumeratorText, "Starting Numerator", false
-        ).getOrElse { return it }
-        val endNumerator = UnitStore.extractUnits(
-            endingNumeratorText, "Ending Numerator", false
-        ).getOrElse { return it }
-        val startDenominator = UnitStore.extractUnits(
-            startingDenominatorText, "Starting Denominator", true
-        ).getOrElse { return it }
-        val endDenominator = UnitStore.extractUnits(
-            endingDenominatorText, "Ending Denominator", true
-        ).getOrElse { return it }
-        try {
-            validateUnitCounts(startNumerator, startDenominator, endNumerator, endDenominator)
-        } catch (e: IllegalArgumentException) {
-            return e
-        }
-        val steps = mutableListOf<ConversionStep>()
+
+        val left = startingNumerator.text.toString().intoQuantity()
+            .divide(startingDenominator.text.toString().intoQuantity()).removeValue().clean()
+        val right = endingNumerator.text.toString().intoQuantity()
+            .divide(endingDenominator.text.toString().intoQuantity()).removeValue().clean()
+        Log.d(TAG, "convert: left = `$left` ")
+        Log.d(TAG, "convert: right = `$right` ")
+        validateConversion(left, right)
+
         val runningAnswer = RunningAnswer(inputValue)
-        val (startNumeratorCopy, startDenominatorCopy) = recombineNumeratorAndDenominator(
-            startNumerator,
-            startDenominator
-        )
-        val (endNumeratorCopy, endDenominatorCopy) = recombineNumeratorAndDenominator(
-            endNumerator,
-            endDenominator
-        )
-        for (path in findPathsBetween(startNumeratorCopy, endNumeratorCopy)) {
-            steps.addPath(path, runningAnswer, false)
-        }
-        for (path in findPathsBetween(startDenominatorCopy, endDenominatorCopy)) {
-            steps.addPath(path, runningAnswer, true)
+
+        val steps = mutableListOf<Conversion>().runCatching {
+            for (path in findPathsBetween(left, right, true)) {
+                addAll(traversePath(path, runningAnswer, false))
+            }
+            for (path in findPathsBetween(left, right, false)) {
+                addAll(traversePath(path, runningAnswer, true))
+            }
+            toList()
+        }.getOrElse { failure ->
+            if (failure !is PromotionRequiredException) throw failure
+            mutableListOf<Conversion>().run {
+                Log.d(TAG, "convert: fundamental = `${left.asFundamental()}` ")
+                for (conversion in findPathToFundamental(left)) {
+                    add(conversion)
+                }
+                for (conversion in findPathToFundamental(right).reversed().drop(1)) {
+                    add(conversion)
+                }
+                toList()
+            }
         }
 
         if (steps.isEmpty()) {
-            return Throwable("No conversion path found")
+            throw ReallyBadException("No paths found with conversion input:`$inputValue` `${startingNumerator.text}` / `${startingDenominator.text}` --> `${endingNumerator.text}` / `${endingDenominator.text}`")
         }
 
         displayOutput(
-            inputValue,
-            runningAnswer.value,
-            steps.dedupCount(),
-            startNumerator.dedupCount(),
-            startDenominator.dedupCount(),
-            endNumerator.dedupCount(),
-            endDenominator.dedupCount()
+            inputValue, runningAnswer.value, steps.dedupCount(), left, right
         )
-        return null
     }
 
-    private fun recombineNumeratorAndDenominator(
-        n1: List<SimpleUnit>,
-        d1: List<SimpleUnit>
-    ): Pair<MutableList<SimpleUnit>, MutableList<SimpleUnit>> {
-        val n2 = mutableListOf<SimpleUnit>()
-        val d2 = mutableListOf<SimpleUnit>()
-        recombine(n1, n2, d2)
-        recombine(d1, d2, n2)
-        return Pair(n2, d2)
+    private fun findPathToFundamental(
+        quantity: Quantity, path: MutableList<Conversion> = mutableListOf(), upperExponent: Int = 1
+    ): MutableList<Conversion> {
+        if (quantity.complexity() == 0) {
+            Log.d(TAG, "findPathToFundamental: returning $path on quantity $quantity")
+            return path
+        }
+        quantity.units.forEach { (unit, exponent) ->
+            findPathToFundamental(getLowestComplexityConvertibleQuantity(unit), path, upperExponent * exponent)
+        }
+        throw IllegalStateException("While finding path to fundamental")
     }
 
-    private fun recombine(
-        supplier: List<SimpleUnit>,
-        alikeReceiver: MutableList<SimpleUnit>,
-        oppositeReceiver: MutableList<SimpleUnit>
-    ) {
-        supplier.forEach {
-            it.getConstituents().forEach { (unit, count) ->
-                if (count > 0) alikeReceiver.addAll(List(count) { unit })
-                else if (count < 0) oppositeReceiver.addAll(List(-count) { unit })
+    private fun getLowestComplexityConvertibleQuantity(unit: SimpleUnit): Quantity {
+        var lowestComplexity = Int.MAX_VALUE
+        var leastComplex: Quantity? = null
+        for (conversion in unit.getConversions()) {
+            val quantity = conversion.getOther(unit)
+            if (quantity.complexity() < lowestComplexity) {
+                leastComplex = quantity
+                lowestComplexity = quantity.complexity()
             }
+        }
+        Log.d(TAG, "getLowestComplexityConvertibleQuantity: returning $leastComplex")
+        return leastComplex!!
+    }
+
+    private fun traversePath(
+        path: List<SimpleUnit>, answer: RunningAnswer, invert: Boolean
+    ): List<Conversion> = mutableListOf<Conversion>().also { list ->
+        for (index in 1 until path.size) {
+            Log.d(TAG, "traversePath: ${path[index - 1]} -> ${path[index]}")
+            val conversion = path[index - 1].getConversionTo(path[index])
+            conversion.flippedToConvertInto(path[index], invert).let {
+                list.add(it)
+                it.apply(answer)
+            }
+        }
+    }
+
+    private fun validateConversion(left: Quantity, right: Quantity) {
+        if (left === right) {
+            throw MeaninglessConversionException("the input and output units are the same")
+        }
+        val leftDimensionality = left.dimensionality().clean()
+        val rightDimensionality = right.dimensionality().clean()
+        Log.d(TAG, "validateConversion: left: $leftDimensionality, right: $rightDimensionality")
+        if (leftDimensionality != rightDimensionality) {
+            throw ImpossibleConversionException()
+        }
+        if (leftDimensionality.isEmpty() || rightDimensionality.isEmpty()) {
+            throw MeaninglessConversionException("all the units cancel out on both sides")
         }
     }
 
     private fun displayOutput(
         inputValue: Double,
         answer: Double,
-        steps: Map<ConversionStep, Int>,
-        startNumerator: Map<SimpleUnit, Int>,
-        startDenominator: Map<SimpleUnit, Int>,
-        endNumerator: Map<SimpleUnit, Int>,
-        endDenominator: Map<SimpleUnit, Int>
+        steps: Map<Conversion, Int>,
+        left: Quantity,
+        right: Quantity
     ) {
         outputValue.text = TripleStringBuilder(outputValue.maxEms).let {
             it.appendValue(answer, 3, 1)
-            it.appendUnits(endNumerator, endDenominator, 0)
+            it.appendUnits(right, 0)
             it.squishSquash(0)
         }
 
         conversionSteps.text = TripleStringBuilder(conversionSteps.maxEms).let {
             it.appendValue(inputValue, 2, 2)
-            it.appendUnits(startNumerator, startDenominator, 2)
+            it.appendUnits(left, 2)
             for ((step, exponent) in steps) {
                 it.appendMiddle(" × ", 2)
-                it.appendConversionStep(step, exponent, 2)
+                it.appendConversion(step, exponent, 2)
             }
             it.appendMiddle(" = ", 2)
             it.appendValue(answer, 3, 2)
-            it.appendUnits(endNumerator, endDenominator, 2)
+            it.appendUnits(right, 2)
             it.squishSquash(0)
         }
 
@@ -201,41 +203,26 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun MutableList<ConversionStep>.addPath(
-        path: List<SimpleUnit>, runningAnswer: RunningAnswer, inverse: Boolean
-    ) = path.iterator().peeking().let {
-        for (unit in it) {
-            val next = try {
-                it.peek()
-            } catch (_: NoSuchElementException) {
-                break
-            }
-            add(
-                if (inverse) {
-                    next.convert(unit, runningAnswer)
-                } else {
-                    unit.convert(next, runningAnswer)
-                }
-            )
-        }
-    }
-
     private fun findPathsBetween(
-        starts: List<SimpleUnit>, ends: MutableList<SimpleUnit>
-    ) = mutableListOf<List<SimpleUnit>>().also {
-        for (start in starts) {
-            val shortestPath = findFirstShortestPath(start, ends)
-            if (shortestPath.isNotEmpty()) {
-                it.add(shortestPath)
+        starts: Quantity, ends: Quantity, top: Boolean
+    ): List<List<SimpleUnit>> = mutableListOf<List<SimpleUnit>>().also {
+        val expandedEnds = ends.expand(top).toMutableList()
+        for (start in starts.expand(top)) {
+            val shortestPath = findFirstShortestPath(start, expandedEnds)
+            if (shortestPath.isEmpty()) {
+                throw PromotionRequiredException()
             }
+            it.add(shortestPath)
         }
+        // if we were unable to convert all the starts to ends,
+        // then this method fails and we promote
+        if (expandedEnds.isNotEmpty()) throw PromotionRequiredException()
     }.toList()
 
     private fun findFirstShortestPath(
-        start: SimpleUnit,
-        ends: MutableList<SimpleUnit>
+        start: SimpleUnit, ends: MutableList<SimpleUnit>
     ): List<SimpleUnit> {
-        val (parent, distance) = breadthFirstSearch(start)
+        val (parent, distance) = breadthFirstSearch(start) { it.getOneToOneConnections() }
         for (destination in ends) {
             if (distance.containsKey(destination)) {
                 val path = mutableListOf<SimpleUnit>()
@@ -247,29 +234,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 assert(current === start) { "Path thru parents did not properly lead back to start" }
                 path.reverse()
+                Log.d(
+                    TAG,
+                    "findFirstShortestPath: removing $destination from $ends and returning path: $path"
+                )
                 ends.remove(destination) // ensure that this destination is not used again
                 return path
             }
         }
         return listOf()
-    }
-
-    private fun breadthFirstSearch(start: SimpleUnit): Pair<HashMap<SimpleUnit, SimpleUnit>, HashMap<SimpleUnit, Int>> {
-        val parent: HashMap<SimpleUnit, SimpleUnit> = hashMapOf()
-        val distance: HashMap<SimpleUnit, Int> = hashMapOf()
-        distance[start] = 0
-        val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
-        queue.addLast(start)
-        while (queue.isNotEmpty()) {
-            val node = queue.removeFirst()
-            for (neighbor in node.getConnections()) {
-                if (!distance.containsKey(neighbor)) {
-                    distance[neighbor] = distance[node]!! + 1
-                    parent[neighbor] = node
-                    queue.addLast(neighbor)
-                }
-            }
-        }
-        return Pair(parent, distance)
     }
 }

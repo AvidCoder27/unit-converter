@@ -4,11 +4,46 @@ data class RunningAnswer(var value: Double) {
     override fun toString(): String = value.toString()
 }
 
+class InvalidUnitsException(culprit: String) :
+    Exception("`$culprit` is not a valid sequence of units")
+
+class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit")
+class ImpossibleConversionException : Exception("This conversion is impossible!")
+class ReallyBadException(information: String) :
+    Exception("SOMETHING WENT TERRIBLY WRONG! Please email gilireeves@gmail.com with this information: $information")
+
+class MeaninglessConversionException(cause: String) :
+    Exception("This conversion is meaningless because $cause")
+
+class PromotionRequiredException :
+    Exception("This conversion cannot be completed until promoted to a more rigorous method")
+
 fun Double.truncate(precision: Int) = "%.${precision}f".format(this)
 
 fun <T> List<T>.dedupCount(): Map<T, Int> = this.groupingBy { it }.eachCount()
 
-fun Int.toSuperscript(ignore1: Boolean = true): String {
+/**
+ * @throws UndefinedUnitException
+ * @throws InvalidUnitsException
+ */
+fun String.intoQuantity(): Quantity {
+    if (this.isBlank()) return Quantity(1.0, mapOf())
+    return extractValue().let { (value, text) ->
+        Quantity(value, mutableMapOf<SimpleUnit, Int>().also { map ->
+            text.parseUnitsToStringMap().forEach { (name, unitExponent) ->
+                val subMap = UnitStore.getUnit(name)
+                subMap.forEach { (unit, aliasExponent) ->
+                    map[unit] = (map[unit] ?: 0) + unitExponent * aliasExponent
+                }
+            }
+        }.clean())
+    }
+}
+
+fun <T> Map<T, Int>.clean() = this.filterValues { it != 0 }
+
+fun Int.toSuperscript(ignore1: Boolean = true, throwZero: Boolean = true): String {
+    if (this == 0 && throwZero) throw IllegalArgumentException("Cannot convert just 0 to superscript")
     if (this == 1 && ignore1) return ""
     val superscriptChars = mapOf(
         '0' to '\u2070',
@@ -26,63 +61,67 @@ fun Int.toSuperscript(ignore1: Boolean = true): String {
     return this.toString().map { superscriptChars[it] ?: it }.joinToString("")
 }
 
-fun String.parseUnitsToMap(): Map<String, Int> = mutableMapOf<String, Int>().also {
-    Regex("([*/]?\\s*(?:\\w+\\s*)+\\^?\\d*)").findAll(this).forEach { matchResult ->
+@Throws(InvalidUnitsException::class)
+fun String.parseUnitsToStringMap(): Map<String, Int> = mutableMapOf<String, Int>().also {
+    Regex("([,*/]?\\s*(?:[\\w-]+\\s*)+\\^?\\d*)").findAll(this).forEach { matchResult ->
         val term = matchResult.value.trim()
         val parts = term.split("^")
-        val unit = parts[0].replace("*", "").replace("/", "").trim()
+        val unit = parts[0].replace("*", "").replace("/", "").replace(",", "").trim()
         val exponent = parts.getOrNull(1)?.toIntOrNull() ?: 1
         val sign = if (term.startsWith("/")) -1 else 1
         it[unit] = (it[unit] ?: 0) + sign * exponent
     }
+}.also {
+    if (it.isEmpty()) throw InvalidUnitsException(this)
 }
 
-fun Map<SimpleUnit, Int>.foldSize(): Pair<Int, Int> {
-    var pair = Pair(0, 0)
-    forEach { (unit, count) ->
-        pair = pair.add(
-            if (count > 0) unit.getSize().multiply(count)
-            else unit.getSize().multiply(-count).reciprocate()
-        )
+fun String.extractValue(): Pair<Double, String> {
+    val regex = Regex("^\\s*([-+]?\\d+(?:\\.\\d+)?(?:[eE][-+]?\\d+)?)")
+    return regex.find(this).let {
+        if (it == null) Pair(1.0, this.trim())
+        else Pair(it.value.trim().toDouble(), substring(it.range.last + 1).trim())
     }
-    return pair
 }
 
-fun foldTopAndBottom(top: List<SimpleUnit>, bottom: List<SimpleUnit>): Pair<Int, Int> =
-    top.foldSize().add(bottom.foldSize().reciprocate())
-
-private fun List<SimpleUnit>.foldSize(): Pair<Int, Int> =
-    fold(Pair(0, 0)) { acc, unit -> acc.add(unit.getSize()) }
-
-fun Pair<Int, Int>.add(other: Pair<Int, Int>) =
-    Pair(first + other.first, second + other.second)
-
-fun Pair<Int, Int>.multiply(scalar: Int) = Pair(first * scalar, second * scalar)
-
-fun Pair<Int, Int>.reciprocate() = Pair(second, first)
+fun breadthFirstSearch(
+    start: SimpleUnit, action: (SimpleUnit) -> List<SimpleUnit>
+): Pair<HashMap<SimpleUnit, SimpleUnit>, HashMap<SimpleUnit, Int>> {
+    val parent: HashMap<SimpleUnit, SimpleUnit> = hashMapOf()
+    val distance: HashMap<SimpleUnit, Int> = hashMapOf()
+    distance[start] = 0
+    val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
+    queue.addLast(start)
+    while (queue.isNotEmpty()) {
+        val node = queue.removeFirst()
+        for (neighbor in action(node)) {
+            if (!distance.containsKey(neighbor)) {
+                distance[neighbor] = distance[node]!! + 1
+                parent[neighbor] = node
+                queue.addLast(neighbor)
+            }
+        }
+    }
+    return Pair(parent, distance)
+}
 
 interface PeekingIterator<T> : Iterator<T> {
     fun peek(): T
 }
 
-fun <T> Iterator<T>.peeking(): PeekingIterator<T> =
-    if (this is PeekingIterator)
-        this
-    else
-        object : PeekingIterator<T> {
-            private var cached = false
+fun <T> Iterator<T>.peeking(): PeekingIterator<T> = if (this is PeekingIterator) this
+else object : PeekingIterator<T> {
+    private var cached = false
 
-            @Suppress("UNCHECKED_CAST")
-            private var element: T = null as T
-                get() {
-                    if (!cached)
-                        field = this@peeking.next()
-                    return field
-                }
-
-            override fun hasNext(): Boolean = cached || this@peeking.hasNext()
-
-            override fun next(): T = element.also { cached = false }
-
-            override fun peek(): T = element.also { cached = true }
+    @Suppress("UNCHECKED_CAST")
+    private var element: T = null as T
+        get() {
+            if (!cached) field = this@peeking.next()
+            return field
         }
+
+    override fun hasNext(): Boolean = cached || this@peeking.hasNext()
+
+    override fun next(): T = element.also { cached = false }
+
+    override fun peek(): T = element.also { cached = true }
+}

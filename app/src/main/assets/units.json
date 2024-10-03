@@ -51,7 +51,8 @@
         ],
         [
             "I",
-            "ampere|s, A, amp|s"
+            "ampere|s, A, amp|s",
+            "milliamp|s, mA, milliampere|s, milli amp|s, milli ampere|s"
         ],
         [
             "n",
@@ -103,13 +104,28 @@
             "m*d^2/t^2",
             "joule|s, J",
             "kilocalorie|s, kcal, large calorie|s, food calorie|s, dietary calorie|s, kilogram calorie|s",
-            "small calorie|s, cal, calorie|s, gram calorie|s"
+            "small calorie|s, cal, calorie|s, gram calorie|s, thermochemical calorie|s, thermochemical cal",
+            "british thermal unit|s, btu|s"
         ],
         [
-            "m * d^2 / t^3"
+            "m * d^2 / t^3",
+            "watt|s, W",
+            "kilowatt|s, kW",
+            "megawatt|s",
+            "gigawatt|s, GW",
+            "horsepower|s, hp",
+            "milliwatt|s, mw, milli-watt|s, milli watt|s"
         ]
     ],
     "conversions": [
+        "btu = 1055 J",
+        "megawatt = 1000000 W",
+        "745.7 W = 1 horsepower",
+        "1000000 kW = 1 GW",
+        "1000 mW = 1 W",
+        "1 kW = 1000 mW",
+        "watt = J / s",
+        "1000 mA = 1 A",
         "kcal = 4184 J",
         "1000 cal = 1 kcal",
         "joule = N * m",
@@ -184,6 +200,7 @@
         "imperial oz = 28.4130625 mL"
     ],
     "aliases": [
+        "kilowatt-hour|s, kW h, kW hr|s, kWh, kW-hr|s = kilowatt * hour",
         "square inch|es, sq in, sq inch|es = in^2",
         "square foot, square feet, sq ft, sq feet, sq foot = ft^2",
         "square yard|s, sq yd, sq yard|s = yd^2",

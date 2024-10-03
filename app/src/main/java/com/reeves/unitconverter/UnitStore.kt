@@ -97,13 +97,17 @@ object UnitStore {
                 }
             }
             index = 1 + index - countRemoved
+            if (index > units.size * 3) {
+                Log.e("UnitStore", "unprocessed units: $unprocessed")
+                throw Exception("index surpassed ${units.size * 3} when processing units; are you sure all your units are connected?")
+            }
         }
         distance.forEach { (unit, distance) ->
             unit.complexity = distance
         }
 
         units.sortedBy { it.complexity }.forEach {
-            Log.i("UnitStore", "${it.singular()}: ${it.complexity}")
+            Log.i("UnitStore", "Complexity of ${it.singular()} is ${it.complexity}")
         }
     }
 

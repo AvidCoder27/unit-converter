@@ -37,6 +37,8 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
 
     fun removeValue() = Quantity(1.0, units)
 
+    fun withValue(value: Double) = Quantity(value, units)
+
     fun expand(positives: Boolean) = units.flatMap { (unit, count) ->
         if (positives && count > 0) List(count) { unit }
         else if (!positives && count < 0) List(-count) { unit }

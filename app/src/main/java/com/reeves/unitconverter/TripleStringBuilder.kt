@@ -85,6 +85,16 @@ class TripleStringBuilder(private val maxEms: Int) {
         check(finalNewLines)
     }
 
+    fun appendTop(any: Any?, finalNewLines: Int) {
+        top.append(any)
+        extend()
+        check(finalNewLines)
+    }
+
+    fun appendEqualsSign(finalNewLines: Int) = appendMiddle(" = ", finalNewLines)
+
+    fun appendMultiplicationSign(finalNewLines: Int) = appendMiddle(" × ", finalNewLines)
+
     /**
      * This will squash if necessary and always squish the un-squished
      * @param finalNewLines the number of lines to append if it has to squash
@@ -137,15 +147,19 @@ class TripleStringBuilder(private val maxEms: Int) {
         bottom.extend(maxWidth, ' ')
     }
 
-    private fun openParen() {
+    fun openParen(includeBar: Boolean = true) {
         top.append("⎧ ")
-        middle.append("⎪-")
+        middle.append('⎪')
+        if (includeBar) middle.append('-')
+        else middle.append(' ')
         bottom.append("⎩ ")
     }
 
-    private fun closeParen() {
+    fun closeParen(includeBar: Boolean = true) {
         top.append(" ⎫")
-        middle.append("-⎪")
+        if (includeBar) middle.append('-')
+        else middle.append(' ')
+        middle.append("⎪")
         bottom.append(" ⎭")
     }
 

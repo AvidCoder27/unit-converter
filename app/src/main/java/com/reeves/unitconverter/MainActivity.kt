@@ -66,19 +66,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun convert() {
+        val unvalidatedLeft = startingNumerator.text.toString().intoQuantity()
+            .divide(startingDenominator.text.toString().intoQuantity()).removeValue().clean()
+        val right = endingNumerator.text.toString().intoQuantity()
+            .divide(endingDenominator.text.toString().intoQuantity()).removeValue().clean()
+        Log.d(TAG, "convert: left = `$unvalidatedLeft` ")
+        Log.d(TAG, "convert: right = `$right` ")
+        val flip = validateConversion(unvalidatedLeft, right)
+        val left = if (flip) unvalidatedLeft.inverse() else unvalidatedLeft
+
         val inputValue = try {
             inputValue.text.toString().toDouble()
         } catch (_: NumberFormatException) {
             1.0
+        }.let {
+            if (flip) 1.0 / it
+            else it
         }
-
-        val left = startingNumerator.text.toString().intoQuantity()
-            .divide(startingDenominator.text.toString().intoQuantity()).removeValue().clean()
-        val right = endingNumerator.text.toString().intoQuantity()
-            .divide(endingDenominator.text.toString().intoQuantity()).removeValue().clean()
-        Log.d(TAG, "convert: left = `$left` ")
-        Log.d(TAG, "convert: right = `$right` ")
-        validateConversion(left, right)
 
         val runningAnswer = RunningAnswer(inputValue)
         val steps = mutableListOf<Conversion>().runCatching {
@@ -105,12 +109,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (steps.isEmpty()) {
-            throw ReallyBadException("No paths found with conversion input:`$inputValue` `${startingNumerator.text}` / `${startingDenominator.text}` --> `${endingNumerator.text}` / `${endingDenominator.text}`")
+            throw MeaninglessConversionException("the input and output units probably cancel out or are the same")
         }
 
-        displayOutput(
-            inputValue, runningAnswer.value, steps.dedupCount(), left, right
-        )
+        displayOutput(runningAnswer.value, steps.dedupCount(), left.withValue(inputValue), right, flip)
     }
 
     private fun pathToFundamentals(input: Quantity, goingDown: Boolean): List<Conversion> =
@@ -129,8 +131,10 @@ class MainActivity : AppCompatActivity() {
         }.filter { it.third != null }
         if (x.isEmpty()) return null
         val (chosen, exponent, leastComplex) = x.first()
-        path.add(chosen.getConnectionTo(leastComplex!!).flippedToConvertInto(chosen, goingDown))
-        return inputQuantity.multiply(leastComplex.divide(chosen).pow(exponent))
+        repeat(exponent) {
+            path.add(chosen.getConnectionTo(leastComplex!!).flippedToConvertInto(chosen, goingDown))
+        }
+        return inputQuantity.multiply(leastComplex!!.divide(chosen).pow(exponent))
     }
 
     private fun getLowestComplexityConvertibleQuantity(unit: SimpleUnit): Quantity? {
@@ -159,30 +163,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun validateConversion(left: Quantity, right: Quantity) {
-        if (left === right) {
-            throw MeaninglessConversionException("the input and output units are the same")
-        }
+    private fun validateConversion(left: Quantity, right: Quantity): Boolean {
         val leftDimensionality = left.dimensionality().clean()
         val rightDimensionality = right.dimensionality().clean()
         Log.d(TAG, "validateConversion: left: $leftDimensionality, right: $rightDimensionality")
-        if (leftDimensionality != rightDimensionality) {
-            throw ImpossibleConversionException()
-        }
-        if (left == right) {
+        if (left === right) {
             throw MeaninglessConversionException("the input and output units are the same")
         }
         if (leftDimensionality.isEmpty() || rightDimensionality.isEmpty()) {
             throw MeaninglessConversionException("all the units cancel out on both sides")
         }
+        if (leftDimensionality == rightDimensionality) return false
+        if (leftDimensionality == rightDimensionality.mapValues { -it.value }) return true
+        throw ImpossibleConversionException()
     }
 
     private fun displayOutput(
-        inputValue: Double,
         answer: Double,
         steps: Map<Conversion, Int>,
         left: Quantity,
-        right: Quantity
+        right: Quantity,
+        flip: Boolean
     ) {
         outputValue.text = TripleStringBuilder(outputValue.maxEms).let {
             it.appendValue(answer, 3, 1)
@@ -191,13 +192,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         conversionSteps.text = TripleStringBuilder(conversionSteps.maxEms).let {
-            it.appendValue(inputValue, 2, 2)
+            if (flip) {
+                val inverseLeft = left.inverse()
+                it.openParen(false)
+                it.appendValue(inverseLeft.value, 2, 2)
+                it.appendUnits(inverseLeft, 2)
+                it.closeParen(true)
+                it.appendTop("-1", 2)
+                it.appendEqualsSign(2)
+            }
+
+            it.appendValue(left.value, 2, 2)
             it.appendUnits(left, 2)
             for ((step, exponent) in steps) {
-                it.appendMiddle(" × ", 2)
+                it.appendMultiplicationSign(2)
                 it.appendConversion(step, exponent, 2)
             }
-            it.appendMiddle(" = ", 2)
+            it.appendEqualsSign(2)
             it.appendValue(answer, 3, 2)
             it.appendUnits(right, 2)
             it.squishSquash(0)

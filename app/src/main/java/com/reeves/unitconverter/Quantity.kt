@@ -1,6 +1,6 @@
 package com.reeves.unitconverter
 
-import kotlin.math.absoluteValue
+import kotlin.math.pow
 
 data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
     Iterable<Map.Entry<SimpleUnit, Int>> {
@@ -13,7 +13,7 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         }
     }
 
-    fun complexity(): Int = 0// make it combined complexity of all units minus total unit count //dimensionality().values.sumOf { it.absoluteValue } * 2 - units.size
+    fun complexity(): Int = units.keys.sumOf { it.complexity } - units.size
 
     fun multiply(other: Quantity) = Quantity(value * other.value, HashMap(units).apply {
         other.units.forEach { (unit, count) ->
@@ -21,13 +21,11 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         }
     }).clean()
 
-    fun multiply(conversion: Conversion) =
-        multiply(conversion.numerator).divide(conversion.denominator)
-
-    fun divide(conversion: Conversion) =
-        divide(conversion.numerator).multiply(conversion.denominator)
-
     fun divide(other: Quantity) = multiply(other.inverse())
+
+    fun divide(unit: SimpleUnit) = divide(Quantity(1.0, mapOf(unit to 1)))
+
+    fun pow(exponent: Int) = Quantity(value.pow(exponent), units.mapValues { (_, power) -> power * exponent })
 
     fun inverse() = Quantity(1.0 / value, units.mapValues { -it.value })
 
@@ -36,10 +34,6 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
     fun top() = units.filterValues { it > 0 }
 
     fun bottom() = units.filterValues { it < 0 }.mapValues { -it.value }
-
-    fun multiply(value: Double) = Quantity(this.value * value, units)
-
-    fun divide(value: Double) = Quantity(this.value / value, units)
 
     fun removeValue() = Quantity(1.0, units)
 

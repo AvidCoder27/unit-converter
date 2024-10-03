@@ -20,8 +20,8 @@ class TripleStringBuilder(private val maxEms: Int) {
 
     fun appendConversion(step: Conversion, exponent: Int, finalNewLines: Int) {
         openParen()
-        top.append(step.numerator.stringifyTop())
-        bottom.append(step.denominator.stringifyTop())
+        top.append(step.numerator.stringify())
+        bottom.append(step.denominator.stringify())
         extend('-')
         closeParen()
         if (exponent > 1) {
@@ -31,10 +31,10 @@ class TripleStringBuilder(private val maxEms: Int) {
         check(finalNewLines)
     }
 
-    private fun Quantity.stringifyTop() = buildString {
+    private fun Quantity.stringify() = buildString {
         append(value.truncate(2))
         append(' ')
-        append(top().toList().joinToString("×") { (unit, count) ->
+        append(units.toList().joinToString("×") { (unit, count) ->
             unit.abbreviation() + count.toSuperscript()
         })
     }

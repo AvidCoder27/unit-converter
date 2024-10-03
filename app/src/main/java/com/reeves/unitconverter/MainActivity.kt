@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
-import com.reeves.unitconverter.UnitStore.asFundamental
 
 private const val TAG = "MainActivity"
 
@@ -82,7 +81,6 @@ class MainActivity : AppCompatActivity() {
         validateConversion(left, right)
 
         val runningAnswer = RunningAnswer(inputValue)
-
         val steps = mutableListOf<Conversion>().runCatching {
             for (path in findPathsBetween(left, right, true)) {
                 addAll(traversePath(path, runningAnswer, false))
@@ -94,12 +92,13 @@ class MainActivity : AppCompatActivity() {
         }.getOrElse { failure ->
             if (failure !is PromotionRequiredException) throw failure
             mutableListOf<Conversion>().run {
-                Log.d(TAG, "convert: fundamental = `${left.asFundamental()}` ")
-                for (conversion in findPathToFundamental(left)) {
+                for (conversion in pathToFundamentals(left, true)) {
                     add(conversion)
+                    conversion.apply(runningAnswer)
                 }
-                for (conversion in findPathToFundamental(right).reversed().drop(1)) {
+                for (conversion in pathToFundamentals(right, false).reversed()) {
                     add(conversion)
+                    conversion.apply(runningAnswer)
                 }
                 toList()
             }
@@ -114,21 +113,29 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun findPathToFundamental(
-        quantity: Quantity, path: MutableList<Conversion> = mutableListOf(), upperExponent: Int = 1
-    ): MutableList<Conversion> {
-        if (quantity.complexity() == 0) {
-            Log.d(TAG, "findPathToFundamental: returning $path on quantity $quantity")
-            return path
+    private fun pathToFundamentals(input: Quantity, goingDown: Boolean): List<Conversion> =
+        mutableListOf<Conversion>().also { path ->
+            var quantity = input
+            while (true) {
+                quantity = stepTowardsFundamentals(quantity, path, goingDown) ?: break
+            }
         }
-        quantity.units.forEach { (unit, exponent) ->
-            findPathToFundamental(getLowestComplexityConvertibleQuantity(unit), path, upperExponent * exponent)
-        }
-        throw IllegalStateException("While finding path to fundamental")
+
+    private fun stepTowardsFundamentals(
+        inputQuantity: Quantity, path: MutableList<Conversion>, goingDown: Boolean
+    ): Quantity? {
+        val x = inputQuantity.units.map { (unit, exponent) ->
+            Triple(unit, exponent, getLowestComplexityConvertibleQuantity(unit))
+        }.filter { it.third != null }
+        if (x.isEmpty()) return null
+        val (chosen, exponent, leastComplex) = x.first()
+        path.add(chosen.getConnectionTo(leastComplex!!).flippedToConvertInto(chosen, goingDown))
+        return inputQuantity.multiply(leastComplex.divide(chosen).pow(exponent))
     }
 
-    private fun getLowestComplexityConvertibleQuantity(unit: SimpleUnit): Quantity {
-        var lowestComplexity = Int.MAX_VALUE
+    private fun getLowestComplexityConvertibleQuantity(unit: SimpleUnit): Quantity? {
+        if (unit.complexity == 0) return null
+        var lowestComplexity = unit.complexity
         var leastComplex: Quantity? = null
         for (conversion in unit.getConversions()) {
             val quantity = conversion.getOther(unit)
@@ -137,15 +144,13 @@ class MainActivity : AppCompatActivity() {
                 lowestComplexity = quantity.complexity()
             }
         }
-        Log.d(TAG, "getLowestComplexityConvertibleQuantity: returning $leastComplex")
-        return leastComplex!!
+        return leastComplex
     }
 
     private fun traversePath(
         path: List<SimpleUnit>, answer: RunningAnswer, invert: Boolean
     ): List<Conversion> = mutableListOf<Conversion>().also { list ->
         for (index in 1 until path.size) {
-            Log.d(TAG, "traversePath: ${path[index - 1]} -> ${path[index]}")
             val conversion = path[index - 1].getConversionTo(path[index])
             conversion.flippedToConvertInto(path[index], invert).let {
                 list.add(it)
@@ -163,6 +168,9 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "validateConversion: left: $leftDimensionality, right: $rightDimensionality")
         if (leftDimensionality != rightDimensionality) {
             throw ImpossibleConversionException()
+        }
+        if (left == right) {
+            throw MeaninglessConversionException("the input and output units are the same")
         }
         if (leftDimensionality.isEmpty() || rightDimensionality.isEmpty()) {
             throw MeaninglessConversionException("all the units cancel out on both sides")
@@ -195,12 +203,8 @@ class MainActivity : AppCompatActivity() {
             it.squishSquash(0)
         }
 
-        Log.d(
-            TAG, "outputValue.text: \n${outputValue.text}"
-        )
-        Log.v(
-            TAG, "conversionSteps.text:\n${conversionSteps.text}"
-        )
+        Log.d(TAG, "outputValue.text: \n${outputValue.text}")
+        Log.v(TAG, "conversionSteps.text:\n${conversionSteps.text}")
     }
 
     private fun findPathsBetween(
@@ -222,7 +226,7 @@ class MainActivity : AppCompatActivity() {
     private fun findFirstShortestPath(
         start: SimpleUnit, ends: MutableList<SimpleUnit>
     ): List<SimpleUnit> {
-        val (parent, distance) = breadthFirstSearch(start) { it.getOneToOneConnections() }
+        val (parent, distance) = breadthFirstSearch(start)
         for (destination in ends) {
             if (distance.containsKey(destination)) {
                 val path = mutableListOf<SimpleUnit>()
@@ -234,14 +238,29 @@ class MainActivity : AppCompatActivity() {
                 }
                 assert(current === start) { "Path thru parents did not properly lead back to start" }
                 path.reverse()
-                Log.d(
-                    TAG,
-                    "findFirstShortestPath: removing $destination from $ends and returning path: $path"
-                )
                 ends.remove(destination) // ensure that this destination is not used again
                 return path
             }
         }
         return listOf()
+    }
+
+    private fun breadthFirstSearch(start: SimpleUnit): Pair<HashMap<SimpleUnit, SimpleUnit>, HashMap<SimpleUnit, Int>> {
+        val parent: HashMap<SimpleUnit, SimpleUnit> = hashMapOf()
+        val distance: HashMap<SimpleUnit, Int> = hashMapOf()
+        distance[start] = 0
+        val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
+        queue.addLast(start)
+        while (queue.isNotEmpty()) {
+            val node = queue.removeFirst()
+            for (neighbor in node.getOneToOneConversions()) {
+                if (!distance.containsKey(neighbor)) {
+                    distance[neighbor] = distance[node]!! + 1
+                    parent[neighbor] = node
+                    queue.addLast(neighbor)
+                }
+            }
+        }
+        return Pair(parent, distance)
     }
 }

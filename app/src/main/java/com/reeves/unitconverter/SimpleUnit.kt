@@ -7,17 +7,17 @@ data class SimpleUnit(private val names: List<String>, val dimensionality: Map<D
 
     var complexity: Int = Int.MAX_VALUE
     private val conversions: MutableSet<Conversion> = mutableSetOf()
-    private val connections: MutableSet<Quantity> = mutableSetOf()
+    private val connections: MutableSet<Conversion> = mutableSetOf()
 
     fun addConversion(conversion: Conversion) = conversions.add(conversion)
 
-    fun addConnection(connection: Quantity) = connections.add(connection)
+    fun addConnection(connection: Conversion) = connections.add(connection)
 
     fun getConversions(): List<Conversion> = conversions.toList()
 
-    fun getConnections(): List<Quantity> = connections.toList()
+    fun getConnections(): List<Conversion> = connections.toList()
 
-    fun getOneToOneConnections(): List<SimpleUnit> =
+    fun getOneToOneConversions(): List<SimpleUnit> =
         conversions.toList().map { it.getOther(this) }.filter { it.units.size == 1 }.map { it.units.keys.first() }
 
     fun getConversionTo(other: SimpleUnit): Conversion {
@@ -26,6 +26,18 @@ data class SimpleUnit(private val names: List<String>, val dimensionality: Map<D
                 return it
             }
             if (it.denominator.units.size == 1 && it.denominator.units.containsKey(other)) {
+                return it
+            }
+        }
+        throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")
+    }
+
+    fun getConnectionTo(other: Quantity): Conversion {
+        connections.forEach {
+            if (it.numerator == other) {
+                return it
+            }
+            if (it.denominator == other) {
                 return it
             }
         }

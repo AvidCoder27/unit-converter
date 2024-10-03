@@ -3,7 +3,6 @@ package com.reeves.unitconverter
 import android.content.Context
 import android.util.Log
 import org.json.JSONObject
-import kotlin.math.min
 
 object UnitStore {
     private val unitNames: HashMap<String, SimpleUnit> = HashMap()
@@ -65,31 +64,89 @@ object UnitStore {
                     denominator?.addConversion(conversion)
                     conversions.add(conversion)
                     conversion.denominator.forEach {
-                        it.key.addConnection(conversion.numerator)
+                        it.key.addConnection(conversion)
                     }
                     conversion.numerator.forEach {
-                        it.key.addConnection(conversion.denominator)
+                        it.key.addConnection(conversion)
                     }
                 }
             }
         }
+
+        val unprocessed = units.toMutableSet()
+        val distance: HashMap<SimpleUnit, Int> = hashMapOf()
 
         setOf(
             "m", "s", "K", "kg", "A", "mol", "cd", "rotation"
         ).forEach { name ->
             val fundamental = getUnit(name).keys.first()
             fundamental.complexity = 0
-            val (_, distance) = breadthFirstSearch(fundamental) { unit ->
-                unit.getConnections().flatMap { it.units.keys }
-            }
-            distance.forEach { (unit, distance) ->
-                unit.complexity = min(unit.complexity, distance)
-            }
+            distance[fundamental] = 0
         }
 
-        units.sortedBy { it.complexity }.reversed().forEach {
+        var index = unprocessed.size
+        while (unprocessed.isNotEmpty()) {
+            val processed = bfsForComplexity(unprocessed.elementAt(index % unprocessed.size), distance)
+            var countRemoved = 0
+            unprocessed.removeAll {
+                if (it in processed) {
+                    countRemoved++
+                    true
+                } else {
+                    false
+                }
+            }
+            index = 1 + index - countRemoved
+        }
+        distance.forEach { (unit, distance) ->
+            unit.complexity = distance
+        }
+
+        units.sortedBy { it.complexity }.forEach {
             Log.i("UnitStore", "${it.singular()}: ${it.complexity}")
         }
+    }
+
+    private fun bfsForComplexity(start: SimpleUnit, distance: HashMap<SimpleUnit, Int>): List<SimpleUnit> {
+        val processed = mutableListOf<SimpleUnit>()
+        if (!distance.containsKey(start)) return processed
+        val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
+        queue.addLast(start)
+        while (queue.isNotEmpty()) {
+            val node = queue.removeFirst()
+            processed.add(node)
+            for (neighbor in node.getOneToOneConversions()) {
+                if (!distance.containsKey(neighbor)) {
+                    distance[neighbor] = distance[node]!! + 1
+                    queue.addLast(neighbor)
+                }
+            }
+            for (conversion in node.getConnections()) {
+                val lonelies = conversion.getLonelies().toList().filterNotNull()
+                if (lonelies.size == 1) {
+                    val lonely = lonelies.first()
+                    val neighbor = conversion.getOther(lonely)
+                    if (!distance.containsKey(lonely)) {
+                        var complexity = 0
+                        var missingDistance = false
+                        neighbor.forEach { (unit, _) ->
+                            if (distance.containsKey(unit)) {
+                                complexity += distance[unit]!! + 1
+                            } else {
+                                missingDistance = true
+                            }
+                        }
+                        if (missingDistance) {
+                            continue
+                        }
+                        distance[lonely] = distance[node]!! + complexity
+                        processed.add(lonely)
+                        queue.addLast(lonely)
+                    }
+                }
+            }
+        }
+        return processed
     }
 
     private fun extractNames(input: String) = mutableListOf<String>().also { names ->
@@ -119,23 +176,4 @@ object UnitStore {
         aliases[name.lowercase()]?.let { return it.units }
         throw UndefinedUnitException(name)
     }
-
-    /**
-     * For any quantity, this function will return a quantity that has units equivalent to the input
-     * but all units will be from the fundamental base units (meter for length, second for time, etc.)
-     *
-     * **HOWEVER,** the value on the returned quantity will not be equivalent; it will just be 1
-     */
-    fun Quantity.asFundamental() = Quantity(1.0, dimensionality().mapKeys {
-        when (it.key) {
-            DIMENSION.LENGTH -> getUnit("meter")
-            DIMENSION.TIME -> getUnit("second")
-            DIMENSION.TEMPERATURE -> getUnit("kelvin")
-            DIMENSION.MASS -> getUnit("kilogram")
-            DIMENSION.ELECTRIC_CURRENT -> getUnit("ampere")
-            DIMENSION.AMOUNT_OF_SUBSTANCE -> getUnit("mole")
-            DIMENSION.LUMINOUS_INTENSITY -> getUnit("candela")
-            DIMENSION.ROTATION -> getUnit("rotation")
-        }.keys.first()
-    })
 }

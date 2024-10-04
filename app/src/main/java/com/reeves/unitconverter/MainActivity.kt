@@ -140,15 +140,19 @@ class MainActivity : AppCompatActivity() {
     private fun getLowestComplexityConvertibleQuantity(unit: SimpleUnit): Quantity? {
         if (unit.complexity == 0) return null
         var lowestComplexity = unit.complexity
-        var leastComplex: Quantity? = null
+        val leastComplex: MutableList<Quantity> = mutableListOf()
         for (conversion in unit.getConversions()) {
             val quantity = conversion.getOther(unit)
             if (quantity.complexity() < lowestComplexity) {
-                leastComplex = quantity
+                leastComplex.clear()
+                leastComplex.add(quantity)
                 lowestComplexity = quantity.complexity()
+            } else if (quantity.complexity() == lowestComplexity) {
+                leastComplex.add(quantity)
             }
         }
-        return leastComplex
+        leastComplex.sortBy { it.hashCode() }
+        return leastComplex.first()
     }
 
     private fun traversePath(

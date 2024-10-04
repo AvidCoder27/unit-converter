@@ -37,7 +37,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.katexmathview)
+    //implementation(libs.katexmathview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

@@ -38,9 +38,10 @@ data class Conversion(val numerator: Quantity, val denominator: Quantity) {
     fun flippedToConvertInto(unit: SimpleUnit, invert: Boolean): Conversion =
         if (denominator.units.containsKey(unit)) {
             if (invert) this else inverse()
-        }
-        else if (numerator.units.containsKey(unit)) {
+        } else if (numerator.units.containsKey(unit)) {
             if (invert) inverse() else this
-        }
-        else throw IllegalArgumentException("This conversion does not contain $unit as the only unit in its numerator or denominator")
+        } else throw IllegalArgumentException("This conversion does not contain $unit as the only unit in its numerator or denominator")
+
+    fun isInverseOf(other: Conversion) =
+        numerator == other.denominator && denominator == other.numerator
 }

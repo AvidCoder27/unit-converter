@@ -94,10 +94,10 @@ class MainActivity : AppCompatActivity() {
             for (path in findPathsBetween(left, right, false)) {
                 addAll(traversePath(path, runningAnswer, true))
             }
-            toList()
+            this
         }.getOrElse { failure ->
             if (failure !is PromotionRequiredException) throw failure
-            mutableListOf<Conversion>().run {
+            mutableListOf<Conversion>().apply {
                 for (conversion in pathToFundamentals(left, true)) {
                     add(conversion)
                     conversion.apply(runningAnswer)
@@ -106,10 +106,6 @@ class MainActivity : AppCompatActivity() {
                     add(conversion)
                     conversion.apply(runningAnswer)
                 }
-                for (conversion in this) {
-
-                }
-                toList()
             }
         }
 
@@ -117,7 +113,35 @@ class MainActivity : AppCompatActivity() {
             throw MeaninglessConversionException("the input and output units probably cancel out or are the same")
         }
 
-        displayOutput(runningAnswer.value, steps.dedupCount(), left.withValue(inputValue), right, flip)
+        displayOutput(
+            runningAnswer.value, dedupAndCancelOut(steps), left.withValue(inputValue), right, flip
+        )
+    }
+
+    private fun dedupAndCancelOut(conversions: List<Conversion>): Map<Conversion, Int> {
+        val conversionMap = conversions.groupingBy { it }.eachCountTo(mutableMapOf())
+        val processedConversions = mutableSetOf<Conversion>()
+
+        for (conversion in conversions) {
+            if (conversion in processedConversions) continue
+            val inverse = conversions.find { it.isInverseOf(conversion) }
+            if (inverse != null && inverse !in processedConversions) {
+                val count = conversionMap[conversion] ?: 0
+                val inverseCount = conversionMap[inverse] ?: 0
+
+                if (count > inverseCount) {
+                    conversionMap[conversion] = count - inverseCount
+                } else if (count < inverseCount) {
+                    conversionMap[inverse] = inverseCount - count
+                } else {
+                    conversionMap.remove(conversion)
+                    conversionMap.remove(inverse)
+                }
+                processedConversions.add(conversion)
+                processedConversions.add(inverse)
+            }
+        }
+        return conversionMap
     }
 
     private fun pathToFundamentals(input: Quantity, goingDown: Boolean): List<Conversion> =
@@ -137,7 +161,10 @@ class MainActivity : AppCompatActivity() {
         if (x.isEmpty()) return null
         val (chosen, exponent, leastComplex) = x.first()
         repeat(exponent.absoluteValue) {
-            path.add(chosen.getConnectionTo(leastComplex!!).flippedToConvertInto(chosen, goingDown xor (exponent.sign < 0)))
+            path.add(
+                chosen.getConnectionTo(leastComplex!!)
+                    .flippedToConvertInto(chosen, goingDown xor (exponent.sign < 0))
+            )
         }
         return inputQuantity.multiply(leastComplex!!.divide(chosen).pow(exponent))
     }
@@ -188,11 +215,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun displayOutput(
-        answer: Double,
-        steps: Map<Conversion, Int>,
-        left: Quantity,
-        right: Quantity,
-        flip: Boolean
+        answer: Double, steps: Map<Conversion, Int>, left: Quantity, right: Quantity, flip: Boolean
     ) {
         outputValue.text = TripleStringBuilder(outputValue.maxEms).let {
             it.appendValue(answer, 3, 1)

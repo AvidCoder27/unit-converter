@@ -172,7 +172,7 @@
         "tablespoon = 3 teaspoons",
         "gallon = 128 fl oz",
         "pint = 16 fl oz",
-        "fl oz = 29.5735 ml",
+        "fl oz = 29.5735295625 mL",
         "gallon = 231 cubic inches",
         "fl oz = 1.8046875 cubic inches",
         "US dry pint = 18.6 fl oz",

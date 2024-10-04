@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
+import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 private const val TAG = "MainActivity"
 
@@ -104,6 +106,9 @@ class MainActivity : AppCompatActivity() {
                     add(conversion)
                     conversion.apply(runningAnswer)
                 }
+                for (conversion in this) {
+
+                }
                 toList()
             }
         }
@@ -131,8 +136,8 @@ class MainActivity : AppCompatActivity() {
         }.filter { it.third != null }
         if (x.isEmpty()) return null
         val (chosen, exponent, leastComplex) = x.first()
-        repeat(exponent) {
-            path.add(chosen.getConnectionTo(leastComplex!!).flippedToConvertInto(chosen, goingDown))
+        repeat(exponent.absoluteValue) {
+            path.add(chosen.getConnectionTo(leastComplex!!).flippedToConvertInto(chosen, goingDown xor (exponent.sign < 0)))
         }
         return inputQuantity.multiply(leastComplex!!.divide(chosen).pow(exponent))
     }

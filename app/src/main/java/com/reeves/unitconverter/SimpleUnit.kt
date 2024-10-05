@@ -1,10 +1,6 @@
 package com.reeves.unitconverter
 
 data class SimpleUnit(private val names: List<String>, val dimensionality: Map<DIMENSION, Int>) {
-    init {
-        require(names.size >= 2) { "Unit must have at least two names, only has `${names[0]}`" }
-    }
-
     var complexity: Int = Int.MAX_VALUE
     private val conversions: MutableSet<Conversion> = mutableSetOf()
     private val connections: MutableSet<Conversion> = mutableSetOf()
@@ -44,8 +40,8 @@ data class SimpleUnit(private val names: List<String>, val dimensionality: Map<D
         throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")
     }
 
-    fun plural(): String = names[1]
     fun singular(): String = names[0]
+    fun plural(): String = if (names.size > 1) names[1] else singular()
     fun abbreviation(): String = if (names.size > 2) names[2] else singular()
     override fun toString(): String = abbreviation()
 }

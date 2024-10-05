@@ -43,7 +43,7 @@
             "slug|s",
             "gram|s, g",
             "milligram|s, mg",
-            "metric ton|s, megagram|s, tonne|s",
+            "metric ton|s, tonne|s, megagram|s",
             "long ton|s, british ton|s, imperial ton|s",
             "short ton|s, us ton|s",
             "ounce|s, oz",
@@ -115,9 +115,26 @@
             "gigawatt|s, GW",
             "horsepower|s, hp",
             "milliwatt|s, mw, milli-watt|s, milli watt|s"
+        ],
+        [
+            "m / d / t^2",
+            "pascal|s, Pa",
+            "kilopascal|s, kPa",
+            "psi",
+            "atmosphere|s, atm|s",
+            "torr|s, mmHg, millimeter of mercury",
+            "bar|s",
+            "millibar|s"
         ]
     ],
     "conversions": [
+        "760 mmHg = 1 atm",
+        "1 bar = 1000 millibars",
+        "psi = lbf / in^2",
+        "pascal = N/m^2",
+        "1000 kPa = 1 pascal",
+        "1 atm = 101.325 kPa",
+        "bar = 100.000 kPa",
         "btu = 1055 J",
         "megawatt = 1000000 W",
         "745.7 W = 1 horsepower",

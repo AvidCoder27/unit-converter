@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -22,8 +21,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var endingNumerator: EditText
     private lateinit var endingDenominator: EditText
     private lateinit var convertButton: Button
-    private lateinit var conversionSteps: TextView
-    private lateinit var outputValue: TextView
+    private lateinit var conversionSteps: MathView
+    private lateinit var outputValue: MathView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +48,8 @@ class MainActivity : AppCompatActivity() {
         convertButton.setOnClickListener {
             @Suppress("DEPRECATION") ViewCompat.getWindowInsetsController(window.decorView)
                 ?.hide(WindowInsetsCompat.Type.ime())
-            outputValue.text = ""
-            conversionSteps.text = ""
+            conversionSteps.setDisplayText("")
+            outputValue.setDisplayText("")
             try {
                 convert()
             } catch (e: Exception) {
@@ -153,7 +152,7 @@ class MainActivity : AppCompatActivity() {
         }
 
     private fun stepTowardsFundamentals(
-        inputQuantity: Quantity, path: MutableList<Conversion>, goingDown: Boolean
+        inputQuantity: Quantity, path: MutableList<Conversion>, goingDown: Boolean,
     ): Quantity? {
         val x = inputQuantity.units.map { (unit, exponent) ->
             Triple(unit, exponent, getLowestComplexityConvertibleQuantity(unit))
@@ -188,7 +187,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun traversePath(
-        path: List<SimpleUnit>, answer: RunningAnswer, invert: Boolean
+        path: List<SimpleUnit>, answer: RunningAnswer, invert: Boolean,
     ): List<Conversion> = mutableListOf<Conversion>().also { list ->
         for (index in 1 until path.size) {
             val conversion = path[index - 1].getConversionTo(path[index])
@@ -215,43 +214,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun displayOutput(
-        answer: Double, steps: Map<Conversion, Int>, left: Quantity, right: Quantity, flip: Boolean
+        answer: Double, steps: Map<Conversion, Int>, left: Quantity, right: Quantity, flip: Boolean,
     ) {
-        outputValue.text = TripleStringBuilder(outputValue.maxEms).let {
-            it.appendValue(answer, 3, 1)
-            it.appendUnits(right, 0)
-            it.squishSquash(0)
-        }
+        outputValue.setDisplayText(KatexStringBuilder().let {
+            it.appendValue(answer)
+            it.appendUnits(right)
+            it.toString()
+        })
 
-        conversionSteps.text = TripleStringBuilder(conversionSteps.maxEms).let {
-            if (flip) {
-                val inverseLeft = left.inverse()
-                it.openParen(false)
-                it.appendValue(inverseLeft.value, 2, 2)
-                it.appendUnits(inverseLeft, 2)
-                it.closeParen(true)
-                it.appendTop("-1", 2)
-                it.appendEqualsSign(2)
-            }
-
-            it.appendValue(left.value, 2, 2)
-            it.appendUnits(left, 2)
+        conversionSteps.setDisplayText(KatexStringBuilder().let {
+            if (flip) it.appendInverseQuantity(left.inverse())
+            it.appendValue(left.value)
+            it.appendUnits(left)
             for ((step, exponent) in steps) {
-                it.appendMultiplicationSign(2)
-                it.appendConversion(step, exponent, 2)
+                it.appendMultiplicationSign()
+                it.appendConversion(step, exponent)
             }
-            it.appendEqualsSign(2)
-            it.appendValue(answer, 3, 2)
-            it.appendUnits(right, 2)
-            it.squishSquash(0)
-        }
+            it.appendEqualsSign()
+            it.appendValue(answer)
+            it.appendUnits(right)
+            it.toString()
+        })
 
-        Log.d(TAG, "outputValue.text: \n${outputValue.text}")
-        Log.v(TAG, "conversionSteps.text:\n${conversionSteps.text}")
+        Log.d(TAG, "outputValue: \n${outputValue.getText()}")
+        Log.v(TAG, "conversionSteps:\n${conversionSteps.getText()}")
     }
 
     private fun findPathsBetween(
-        starts: Quantity, ends: Quantity, top: Boolean
+        starts: Quantity, ends: Quantity, top: Boolean,
     ): List<List<SimpleUnit>> = mutableListOf<List<SimpleUnit>>().also {
         val expandedEnds = ends.expand(top).toMutableList()
         for (start in starts.expand(top)) {
@@ -267,7 +257,7 @@ class MainActivity : AppCompatActivity() {
     }.toList()
 
     private fun findFirstShortestPath(
-        start: SimpleUnit, ends: MutableList<SimpleUnit>
+        start: SimpleUnit, ends: MutableList<SimpleUnit>,
     ): List<SimpleUnit> {
         val (parent, distance) = breadthFirstSearch(start)
         for (destination in ends) {

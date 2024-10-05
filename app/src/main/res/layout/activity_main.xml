@@ -207,33 +207,6 @@
             app:layout_constraintTop_toBottomOf="@id/ending_denominator" />
         <!--Output-->
         <TextView
-            android:id="@+id/conversion_steps_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:text="Conversion Steps:"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/output_value" />
-
-        <TextView
-            android:id="@+id/conversion_steps"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            android:background="@drawable/output_field_background"
-            android:fontFamily="monospace"
-            android:maxEms="43"
-            android:padding="10dp"
-            android:textSize="18sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/conversion_steps_label"
-            tools:text="A123456789B123456789C123456789D12" />
-
-        <TextView
             android:id="@+id/output_value_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -243,22 +216,38 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/convert_button" />
 
-        <TextView
+        <com.reeves.unitconverter.MathView
             android:id="@+id/output_value"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
-            android:background="@drawable/output_field_background"
-            android:fontFamily="monospace"
-            android:maxEms="38"
-            android:padding="16dp"
-            android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/output_value_label"
-            tools:text="A123456789B123456789C1234567" />
+            app:setTextColor="@android:color/white"
+            app:setTextSize="14sp"
+            app:setViewBackgroundColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/conversion_steps_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="Conversion Steps:"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/output_value" />
+
+
+        <com.reeves.unitconverter.MathView
+            android:id="@+id/conversion_steps"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/conversion_steps_label"
+            app:setTextColor="@android:color/white"
+            app:setTextSize="14sp"
+            app:setViewBackgroundColor="@android:color/black" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

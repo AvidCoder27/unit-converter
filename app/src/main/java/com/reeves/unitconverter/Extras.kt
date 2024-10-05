@@ -9,8 +9,6 @@ class InvalidUnitsException(culprit: String) :
 
 class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit")
 class ImpossibleConversionException : Exception("This conversion is impossible!")
-class ReallyBadException(information: String) :
-    Exception("SOMETHING WENT TERRIBLY WRONG! Please email gilireeves@gmail.com with this information: $information")
 
 class MeaninglessConversionException(cause: String) :
     Exception("This conversion is meaningless because $cause")
@@ -19,8 +17,6 @@ class PromotionRequiredException :
     Exception("This conversion cannot be completed until promoted to a more rigorous method")
 
 fun Double.truncate(precision: Int) = "%.${precision}f".format(this)
-
-fun <T> List<T>.dedupCount(): Map<T, Int> = this.groupingBy { it }.eachCount()
 
 /**
  * @throws UndefinedUnitException

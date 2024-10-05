@@ -220,12 +220,13 @@
             android:id="@+id/output_value"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_margin="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/output_value_label"
-            app:setTextColor="@android:color/white"
+            app:setTextColor="@android:color/black"
             app:setTextSize="14sp"
-            app:setViewBackgroundColor="@android:color/black" />
+            app:setViewBackgroundColor="@android:color/white" />
 
         <TextView
             android:id="@+id/conversion_steps_label"
@@ -237,17 +238,17 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/output_value" />
 
-
         <com.reeves.unitconverter.MathView
             android:id="@+id/conversion_steps"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_margin="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/conversion_steps_label"
-            app:setTextColor="@android:color/white"
+            app:setTextColor="@android:color/black"
             app:setTextSize="14sp"
-            app:setViewBackgroundColor="@android:color/black" />
+            app:setViewBackgroundColor="@android:color/white" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

@@ -1,6 +1,6 @@
 package com.reeves.unitconverter
 
-private const val CDOT = "\\cdot"
+private const val DOT = "\\cdot"
 
 class KatexStringBuilder {
     private val builder: StringBuilder = StringBuilder()
@@ -33,7 +33,7 @@ class KatexStringBuilder {
     }
 
     fun appendValue(value: Double) {
-        value.beatify().append()
+        value.beautify().append()
         "\\ ".append()
     }
 
@@ -45,14 +45,14 @@ class KatexStringBuilder {
         numerator.onEachIndexed { index, entry ->
             if (index < numerator.size - 1) {
                 entry.toPair().katex(SimpleUnit::singular).append()
-                CDOT.append()
+                DOT.append()
             } else {
                 entry.toPair().katex(SimpleUnit::plural).append()
             }
         }
         if (denominator.isNotEmpty()) {
             "}{".append()
-            denominator.toList().joinToString(CDOT) { it.katex(SimpleUnit::singular) }.append()
+            denominator.toList().joinToString(DOT) { it.katex(SimpleUnit::singular) }.append()
             "}".append()
         }
     }
@@ -62,7 +62,7 @@ class KatexStringBuilder {
     }
 
     fun appendMultiplicationSign() {
-        CDOT.append()
+        DOT.append()
     }
 
     private fun String.append() {
@@ -76,11 +76,12 @@ class KatexStringBuilder {
         if (value != 1.0 || !ignoreOne) {
             appendValue(value)
         }
-        units.toList().joinToString(CDOT) { it.katex(action) }.append()
+        units.toList().joinToString(DOT) { it.katex(action) }.append()
     }
 
     private fun Pair<SimpleUnit, Int>.katex(action: (SimpleUnit) -> String) =
         " \\text{${action(first)}}" + if (second != 1) "^$second" else ""
 
-    private fun Double.beatify() = truncate(2)
+    // TODO make the beautify method do more than just truncate
+    private fun Double.beautify() = truncate(2)
 }

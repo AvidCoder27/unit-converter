@@ -1,6 +1,6 @@
 package com.reeves.unitconverter
 
-enum class DIMENSION() {
+enum class DIMENSION {
     LENGTH, //'d'
     TIME, //'t'
     TEMPERATURE, //'T'

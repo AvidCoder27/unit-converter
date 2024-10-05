@@ -15,7 +15,10 @@
             "mile|s, mi",
             "nautical mile|s, nmi",
             "hand|s",
-            "light year|s, lyr, ly, light-year|s, lightyear|s"
+            "light year|s, lyr, ly, light-year|s, lightyear|s",
+			"fathom|s",
+			"angstrom|s, Å",
+			"beard-second|s"
         ],
         [
             "t",
@@ -26,10 +29,14 @@
             "minute|s, min|s",
             "hour|s, hr|s",
             "day|s",
+			"week|s",
             "month|s",
             "calendar year|s, year|s, yr|s",
             "decade|s",
-            "centuries, century"
+            "centuries, century",
+			"eon|s",
+			"millennium|s",
+			"fortnight|s"
         ],
         [
             "T",
@@ -47,7 +54,8 @@
             "long ton|s, british ton|s, imperial ton|s",
             "short ton|s, us ton|s",
             "ounce|s, oz",
-            "carat|s"
+            "carat|s",
+			"stone|s"
         ],
         [
             "I",
@@ -128,6 +136,14 @@
         ]
     ],
     "conversions": [
+		"1 beard-second = 10 nanometers",
+		"1 fathom = 2 yards",
+		"1 stone = 14 lbs",
+		"1 eon = 1e9 years",
+		"1 millennium = 1000 years",
+		"1 angstrom = 1e-10 meters",
+		"1 fortnight = 2 weeks",
+		"1 week = 7 days",
         "760 mmHg = 1 atm",
         "1 bar = 1000 millibars",
         "psi = lbf / in^2",

@@ -25,7 +25,7 @@ object UnitStore {
     private fun loadConversions(jsonObject: JSONObject) =
         jsonObject.getJSONArray("conversions").let { array ->
             for (i in 0 until array.length()) {
-                val conversionString = array.getString(i).lowercase()
+                val conversionString = array.getString(i)
                 val equalParts = splitConversionByEquals(conversionString)
                 val conversion =
                     Conversion(equalParts[0].intoQuantity(), equalParts[1].intoQuantity())
@@ -54,11 +54,11 @@ object UnitStore {
     private fun loadAliases(jsonObject: JSONObject) =
         jsonObject.getJSONArray("aliases").let { array ->
             for (i in 0 until array.length()) {
-                val aliasString = array.getString(i).lowercase()
+                val aliasString = array.getString(i)
                 val equalParts = splitConversionByEquals(aliasString)
                 val quantity = equalParts[1].intoQuantity()
                 for (alias in equalParts[0].extractNames()) {
-                    aliases[alias] = quantity
+                    aliases[alias.lowercaseGreaterThan3()] = quantity
                 }
             }
         }
@@ -130,26 +130,26 @@ object UnitStore {
                     undefinedNames.add(name)
                 }
             }
-            undefinedNames.forEach {
-                unitNames[it] = unit!!
-            }
-            return unit!!
+            assignNames(undefinedNames, unit!!)
+            return unit
         }
         val unit = SimpleUnit(names, dimensionality)
-        for (name in names) {
-            unitNames[name] = unit
-        }
+        assignNames(names, unit)
         units.add(unit)
         return unit
     }
 
     private fun createUnit(names: List<String>, dimensionality: Map<DIMENSION, Int>): SimpleUnit {
         val unit = SimpleUnit(names, dimensionality)
-        for (name in names) {
-            unitNames[name] = unit
-        }
+        assignNames(names, unit)
         units.add(unit)
         return unit
+    }
+
+    private fun assignNames(names: List<String>, unit: SimpleUnit) {
+        names.forEach {
+            unitNames[it.lowercaseGreaterThan3()] = unit
+        }
     }
 
     private fun computeComplexities() {
@@ -233,21 +233,22 @@ object UnitStore {
         return processed
     }
 
-    private fun String.extractNames() = mutableListOf<String>().also { names ->
-        split(",").forEach { name ->
-            val builder = StringBuilder()
-            for (chunk in name.trim().lowercase().split('|')) {
-                builder.append(chunk)
-                names.add(builder.toString())
-            }
-        }
-    }
-
     private fun splitConversionByEquals(string: String): List<String> =
         string.split("=").map { it.trim() }.let {
             require(it.size == 2) { "Invalid conversion: $string" }
             return it
         }
+
+
+    private fun String.extractNames() = mutableListOf<String>().also { names ->
+        split(",").forEach { name ->
+            val builder = StringBuilder()
+            for (chunk in name.trim().split('|')) {
+                builder.append(chunk)
+                names.add(builder.toString())
+            }
+        }
+    }
 
     /**
      * For a name of a SimpleUnit, this will just return a mapOf(it to 1)
@@ -256,8 +257,9 @@ object UnitStore {
      * @throws UndefinedUnitException if the unit is not defined as a unit or an alias
      */
     fun getUnit(name: String): Map<SimpleUnit, Int> {
-        unitNames[name.lowercase()]?.let { return mapOf(it to 1) }
-        aliases[name.lowercase()]?.let { return it.units }
-        throw UndefinedUnitException(name)
+        val casedName = name.lowercaseGreaterThan3()
+        unitNames[casedName]?.let { return mapOf(it to 1) }
+        aliases[casedName]?.let { return it.units }
+        throw UndefinedUnitException(casedName)
     }
 }

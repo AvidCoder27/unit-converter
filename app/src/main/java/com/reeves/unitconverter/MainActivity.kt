@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         displayOutput(
-            runningAnswer.value, dedupAndCancelOut(steps), left.withValue(inputValue), right, flip
+            dedupAndCancelOut(steps), left.withValue(inputValue), right.withValue(runningAnswer.value), flip
         )
     }
 
@@ -214,25 +214,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun displayOutput(
-        answer: Double, steps: Map<Conversion, Int>, left: Quantity, right: Quantity, flip: Boolean,
+        steps: Map<Conversion, Int>, left: Quantity, right: Quantity, flip: Boolean,
     ) {
         outputValue.setDisplayText(KatexStringBuilder().let {
-            it.appendValue(answer)
-            it.appendUnits(right)
+            it.appendValueAndUnits(right)
             it.toString()
         })
 
         conversionSteps.setDisplayText(KatexStringBuilder().let {
             if (flip) it.appendInverseQuantity(left.inverse())
-            it.appendValue(left.value)
-            it.appendUnits(left)
+            it.appendValueAndUnits(left)
             for ((step, exponent) in steps) {
                 it.appendMultiplicationSign()
                 it.appendConversion(step, exponent)
             }
             it.appendEqualsSign()
-            it.appendValue(answer)
-            it.appendUnits(right)
+            it.appendValueAndUnits(right)
             it.toString()
         })
 

@@ -16,8 +16,6 @@ class MeaninglessConversionException(cause: String) :
 class PromotionRequiredException :
     Exception("This conversion cannot be completed until promoted to a more rigorous method")
 
-fun Double.truncate(precision: Int) = "%.${precision}f".format(this)
-
 /**
  * @throws UndefinedUnitException
  * @throws InvalidUnitsException
@@ -35,6 +33,8 @@ fun String.intoQuantity(): Quantity {
         }.clean())
     }
 }
+
+fun String.lowercaseGreaterThan3() = if (this.length > 2) this.lowercase() else this
 
 fun <T> Map<T, Int>.clean() = this.filterValues { it != 0 }
 

@@ -22,8 +22,7 @@ class KatexStringBuilder {
 
     fun appendInverseQuantity(inverse: Quantity) {
         " \\left( ".append()
-        appendValue(inverse.value)
-        appendUnits(inverse)
+        appendValueAndUnits(inverse)
         " \\right)^{-1}".append()
         appendEqualsSign()
     }
@@ -38,7 +37,12 @@ class KatexStringBuilder {
         if (exponent > 1) "^{${exponent}}".append()
     }
 
-    fun appendValue(value: Double) {
+    fun appendValueAndUnits(quantity: Quantity) {
+        appendValue(quantity.value)
+        appendUnits(quantity)
+    }
+
+    private fun appendValue(value: Double) {
         if (value < scientificLowerBound || value > scientificUpperBound) {
             scientificFormatter.format(value).let {
                 if (it.contains('E')) {
@@ -54,7 +58,7 @@ class KatexStringBuilder {
         "\\ ".append()
     }
 
-    fun appendUnits(quantity: Quantity) {
+    private fun appendUnits(quantity: Quantity) {
         val numerator = quantity.top()
         val denominator = quantity.bottom()
         if (denominator.isNotEmpty()) " \\frac{".append()
@@ -64,7 +68,7 @@ class KatexStringBuilder {
                 entry.toPair().katex(SimpleUnit::singular).append()
                 DOT.append()
             } else {
-                entry.toPair().katex(SimpleUnit::plural).append()
+                entry.toPair().katex(if (quantity.value == 1.0) SimpleUnit::singular else SimpleUnit::plural).append()
             }
         }
         if (denominator.isNotEmpty()) {

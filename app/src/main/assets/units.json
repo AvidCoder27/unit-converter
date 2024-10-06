@@ -6,7 +6,7 @@
             "%meter|s, %m, %metre|s",
             "inch|es, in",
             "foot, feet, ft",
-            "yard|s, yd|s",
+            "yard|s, yd|s, yrd|s",
             "furlong|s",
             "mile|s, mi",
             "nautical mile|s, nmi",
@@ -84,7 +84,7 @@
             "cup|s",
             "pint|s, pt, US liquid pint|s, US pint|s",
             "quart|s, qt, US quart|s, US liquid quart|s",
-            "gallon|s, US gallon|s, US gal, gal|s, US liquid gallon|s",
+            "gallon|s, gal|s, US gallon|s, US gal, US liquid gallon|s",
             "imperial gallon|s",
             "imperial quart|s",
             "imperial pint|s",
@@ -112,11 +112,11 @@
         ],
         [
             "m / d / t^2",
-            "pascal|s, Pa",
-            "kilopascal|s, kPa",
+            "pascal|s, Pa, pa",
+            "kilopascal|s, kPa, kpa",
             "psi",
             "atmosphere|s, atm|s",
-            "torr|s, mmHg, millimeter of mercury",
+            "torr|s, mmHg, mmhg, millimeter of mercury",
             "bar|s",
             "millibar|s"
         ]

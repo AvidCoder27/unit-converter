@@ -1,12 +1,18 @@
 package com.reeves.unitconverter
 
+import java.text.DecimalFormat
+
 private const val DOT = "\\cdot"
 
 class KatexStringBuilder {
     private val builder: StringBuilder = StringBuilder()
+    private val normalFormatter = DecimalFormat("###,###,###.####")
+    private val scientificFormatter = DecimalFormat("#.####E0")
+    private val scientificLowerBound = 0.1
+    private val scientificUpperBound = 1e+9
 
     init {
-        builder.append("\t\$\\displaystyle ")
+        builder.append("\$\\displaystyle ")
     }
 
     override fun toString(): String {
@@ -33,7 +39,18 @@ class KatexStringBuilder {
     }
 
     fun appendValue(value: Double) {
-        value.beautify().append()
+        if (value < scientificLowerBound || value > scientificUpperBound) {
+            scientificFormatter.format(value).let {
+                if (it.contains('E')) {
+                    it.replace("E", "\\nobreak\\, \\cdot \\nobreak\\, 10^{").append()
+                    "}".append()
+                } else {
+                    it.append()
+                }
+            }
+        } else {
+            normalFormatter.format(value).replace(",", "{,}").append()
+        }
         "\\ ".append()
     }
 
@@ -80,8 +97,5 @@ class KatexStringBuilder {
     }
 
     private fun Pair<SimpleUnit, Int>.katex(action: (SimpleUnit) -> String) =
-        " \\text{${action(first)}}" + if (second != 1) "^$second" else ""
-
-    // TODO make the beautify method do more than just truncate
-    private fun Double.beautify() = truncate(2)
+        " \\text{${action(first).replace("μ", "}\\mu \\text{")}}" + if (second != 1) "^{$second}" else ""
 }

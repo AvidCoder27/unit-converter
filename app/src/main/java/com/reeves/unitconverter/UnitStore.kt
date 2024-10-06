@@ -13,46 +13,13 @@ object UnitStore {
     fun loadFromJson(context: Context) {
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
         val jsonObject = JSONObject(jsonString)
+        loadUnits(jsonObject)
+        loadAliases(jsonObject)
+        loadConversions(jsonObject)
+        computeComplexities()
+    }
 
-        jsonObject.getJSONArray("units").let { array ->
-            for (i in 0 until array.length()) {
-                val alikeUnitsArray = array.getJSONArray(i)
-                val dimensionality: Map<DIMENSION, Int> =
-                    alikeUnitsArray.getString(0).parseUnitsToStringMap().mapKeys {
-                        when (it.key) {
-                            "d" -> DIMENSION.LENGTH
-                            "t" -> DIMENSION.TIME
-                            "T" -> DIMENSION.TEMPERATURE
-                            "m" -> DIMENSION.MASS
-                            "I" -> DIMENSION.ELECTRIC_CURRENT
-                            "n" -> DIMENSION.AMOUNT_OF_SUBSTANCE
-                            "L" -> DIMENSION.LUMINOUS_INTENSITY
-                            "r" -> DIMENSION.ROTATION
-                            else -> throw Exception("Invalid dimension when loading units")
-                        }
-                    }
-                for (j in 1 until alikeUnitsArray.length()) {
-                    val names = extractNames(alikeUnitsArray.getString(j))
-                    val unit = SimpleUnit(names, dimensionality)
-                    for (name in names) {
-                        unitNames[name] = unit
-                    }
-                    units.add(unit)
-                }
-            }
-        }
-
-        jsonObject.getJSONArray("aliases").let { array ->
-            for (i in 0 until array.length()) {
-                val aliasString = array.getString(i).lowercase()
-                val equalParts = splitConversionByEquals(aliasString)
-                val quantity = equalParts[1].intoQuantity()
-                for (alias in extractNames(equalParts[0])) {
-                    aliases[alias] = quantity
-                }
-            }
-        }
-
+    private fun loadConversions(jsonObject: JSONObject) =
         jsonObject.getJSONArray("conversions").let { array ->
             for (i in 0 until array.length()) {
                 val conversionString = array.getString(i).lowercase()
@@ -73,6 +40,47 @@ object UnitStore {
             }
         }
 
+    private fun loadAliases(jsonObject: JSONObject) =
+        jsonObject.getJSONArray("aliases").let { array ->
+            for (i in 0 until array.length()) {
+                val aliasString = array.getString(i).lowercase()
+                val equalParts = splitConversionByEquals(aliasString)
+                val quantity = equalParts[1].intoQuantity()
+                for (alias in extractNames(equalParts[0])) {
+                    aliases[alias] = quantity
+                }
+            }
+        }
+
+    private fun loadUnits(jsonObject: JSONObject) = jsonObject.getJSONArray("units").let { array ->
+        for (i in 0 until array.length()) {
+            val alikeUnitsArray = array.getJSONArray(i)
+            val dimensionality: Map<DIMENSION, Int> =
+                alikeUnitsArray.getString(0).parseUnitsToStringMap().mapKeys {
+                    when (it.key) {
+                        "d" -> DIMENSION.LENGTH
+                        "t" -> DIMENSION.TIME
+                        "T" -> DIMENSION.TEMPERATURE
+                        "m" -> DIMENSION.MASS
+                        "I" -> DIMENSION.ELECTRIC_CURRENT
+                        "n" -> DIMENSION.AMOUNT_OF_SUBSTANCE
+                        "L" -> DIMENSION.LUMINOUS_INTENSITY
+                        "r" -> DIMENSION.ROTATION
+                        else -> throw Exception("Invalid dimension when loading units")
+                    }
+                }
+            for (j in 1 until alikeUnitsArray.length()) {
+                val names = extractNames(alikeUnitsArray.getString(j))
+                val unit = SimpleUnit(names, dimensionality)
+                for (name in names) {
+                    unitNames[name] = unit
+                }
+                units.add(unit)
+            }
+        }
+    }
+
+    private fun computeComplexities() {
         val unprocessed = units.toMutableSet()
         val distance: HashMap<SimpleUnit, Int> = hashMapOf()
 
@@ -86,7 +94,8 @@ object UnitStore {
 
         var index = unprocessed.size
         while (unprocessed.isNotEmpty()) {
-            val processed = bfsForComplexity(unprocessed.elementAt(index % unprocessed.size), distance)
+            val processed =
+                bfsForComplexity(unprocessed.elementAt(index % unprocessed.size), distance)
             var countRemoved = 0
             unprocessed.removeAll {
                 if (it in processed) {
@@ -105,13 +114,12 @@ object UnitStore {
         distance.forEach { (unit, distance) ->
             unit.complexity = distance
         }
-
-        units.sortedBy { it.complexity }.forEach {
-            Log.i("UnitStore", "Complexity of ${it.singular()} is ${it.complexity}")
-        }
     }
 
-    private fun bfsForComplexity(start: SimpleUnit, distance: HashMap<SimpleUnit, Int>): List<SimpleUnit> {
+    private fun bfsForComplexity(
+        start: SimpleUnit,
+        distance: HashMap<SimpleUnit, Int>,
+    ): List<SimpleUnit> {
         val processed = mutableListOf<SimpleUnit>()
         if (!distance.containsKey(start)) return processed
         val queue: ArrayDeque<SimpleUnit> = ArrayDeque()

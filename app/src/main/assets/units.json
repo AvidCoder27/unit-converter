@@ -69,6 +69,30 @@
             "gradian|s, grad|s, gon|s, grade|s"
         ],
         [
+            "b",
+            "bit|s, b",
+            "nibble|s",
+            "byte|s, B",
+
+            "kilobyte|s, kB, KB",
+            "megabyte|s, MB",
+            "gigabyte|s, GB",
+            "terabyte|s, TB",
+            "petabyte|s, PB",
+            "exabyte|s, EB",
+            "zettabyte|s, ZB",
+            "yottabyte|s, YB",
+
+            "kibibyte|s, KiB",
+            "mebibyte|s, MiB",
+            "gigibyte|s, GiB",
+            "tebibyte|s, TiB",
+            "pebibyte|s, PiB",
+            "exbibyte|s, EiB",
+            "zebibyte|s, ZiB",
+            "yobibyte|s, YiB"
+        ],
+        [
             "d*d",
             "acre|s",
             "hectare|s, ha"
@@ -202,7 +226,26 @@
         "imperial pint = 4 imperial gills",
         "imperial gill = 5 imperial ounces",
         "imperial gallon = 160 imperial ounces",
-        "imperial oz = 28.4130625 mL"
+        "imperial oz = 28.4130625 mL",
+        "8 bits = 1 byte",
+        "4 bits = 1 nibble",
+        "2 nibbles = 1 byte",
+        "KB = 1000 bytes",
+        "MB = 1000 kB",
+        "GB = 1000 MB",
+        "TB = 1000 GB",
+        "PB = 1000 TB",
+        "EB = 1000 PB",
+        "ZB = 1000 EB",
+        "YB = 1000 ZB",
+        "KiB = 1024 bytes",
+        "MiB = 1024 KiB",
+        "GiB = 1024 MiB",
+        "TiB = 1024 GiB",
+        "PiB = 1024 TiB",
+        "EiB = 1024 PiB",
+        "ZiB = 1024 EiB",
+        "YiB = 1024 ZiB"
     ],
     "aliases": [
         "mph = miles / hour",

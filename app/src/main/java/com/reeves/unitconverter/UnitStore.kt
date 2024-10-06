@@ -77,6 +77,7 @@ object UnitStore {
                         "n" -> DIMENSION.AMOUNT_OF_SUBSTANCE
                         "L" -> DIMENSION.LUMINOUS_INTENSITY
                         "r" -> DIMENSION.ROTATION
+                        "b" -> DIMENSION.DIGITAL_INFORMATION
                         else -> throw Exception("Invalid dimension when loading units")
                     }
                 }
@@ -157,7 +158,7 @@ object UnitStore {
         val distance: HashMap<SimpleUnit, Int> = hashMapOf()
 
         setOf(
-            "m", "s", "K", "kg", "A", "mol", "cd", "rotation"
+            "m", "s", "K", "kg", "A", "mol", "cd", "rotation", "byte"
         ).forEach { name ->
             val fundamental = getUnit(name).keys.first()
             fundamental.complexity = 0

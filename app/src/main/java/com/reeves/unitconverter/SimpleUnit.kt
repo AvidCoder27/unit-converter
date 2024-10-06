@@ -42,6 +42,6 @@ data class SimpleUnit(private val names: List<String>, val dimensionality: Map<D
 
     fun singular(): String = names[0]
     fun plural(): String = if (names.size > 1) names[1] else singular()
-    fun abbreviation(): String = if (names.size > 2) names[2] else singular()
+    fun abbreviation(): String = if (names.size > 2) names[2] else plural()
     override fun toString(): String = abbreviation()
 }

@@ -3,6 +3,9 @@ package com.reeves.unitconverter
 import android.content.Context
 import android.util.Log
 import org.json.JSONObject
+import kotlin.math.pow
+
+private const val PERCENT = "%"
 
 object UnitStore {
     private val unitNames: HashMap<String, SimpleUnit> = HashMap()
@@ -27,18 +30,26 @@ object UnitStore {
                 val conversion =
                     Conversion(equalParts[0].intoQuantity(), equalParts[1].intoQuantity())
                 conversion.getLonelies().let { (numerator, denominator) ->
-                    numerator?.addConversion(conversion)
-                    denominator?.addConversion(conversion)
-                    conversions.add(conversion)
-                    conversion.denominator.forEach {
-                        it.key.addConnection(conversion)
-                    }
-                    conversion.numerator.forEach {
-                        it.key.addConnection(conversion)
-                    }
+                    addConversion(conversion, numerator, denominator)
                 }
             }
         }
+
+    private fun addConversion(
+        conversion: Conversion,
+        alpha: SimpleUnit?,
+        beta: SimpleUnit?,
+    ) {
+        alpha?.addConversion(conversion)
+        beta?.addConversion(conversion)
+        conversions.add(conversion)
+        conversion.denominator.forEach {
+            it.key.addConnection(conversion)
+        }
+        conversion.numerator.forEach {
+            it.key.addConnection(conversion)
+        }
+    }
 
     private fun loadAliases(jsonObject: JSONObject) =
         jsonObject.getJSONArray("aliases").let { array ->
@@ -46,7 +57,7 @@ object UnitStore {
                 val aliasString = array.getString(i).lowercase()
                 val equalParts = splitConversionByEquals(aliasString)
                 val quantity = equalParts[1].intoQuantity()
-                for (alias in extractNames(equalParts[0])) {
+                for (alias in equalParts[0].extractNames()) {
                     aliases[alias] = quantity
                 }
             }
@@ -70,14 +81,75 @@ object UnitStore {
                     }
                 }
             for (j in 1 until alikeUnitsArray.length()) {
-                val names = extractNames(alikeUnitsArray.getString(j))
-                val unit = SimpleUnit(names, dimensionality)
-                for (name in names) {
-                    unitNames[name] = unit
+                val line = alikeUnitsArray.getString(j)
+                if (line.startsWith(PERCENT)) {
+                    val names = line.extractNames()
+                    assert(names.size >= 3) { "Prefixed unit `${names[0]}` must include a singular, plural, and abbreviated form" }
+                    names.forEach {
+                        assert(it.contains(PERCENT)) { "Prefixed unit `${names[0]}` must contain $PERCENT in all names" }
+                    }
+                    val baseUnit = createUnit(names.map { it.replace(PERCENT, "") }, dimensionality)
+                    val baseQuantity = Quantity(1.0, mapOf(baseUnit to 1))
+                    Prefix.PREFIXES.forEach {
+                        val prefixedNames = mutableListOf(
+                            names[0].replace(PERCENT, it.prefix),
+                            names[1].replace(PERCENT, it.prefix),
+                            names[2].replace(PERCENT, it.label)
+                        )
+                        if (it.prefix == "micro") {
+                            prefixedNames.add(names[2].replace(PERCENT, "u"))
+                        }
+                        for (name in names.drop(3)) {
+                            prefixedNames.add(it.prefix + name)
+                        }
+                        val prefixedUnit = createUnitChecking(prefixedNames, dimensionality)
+                        val conversion = Conversion(
+                            baseQuantity, Quantity(10.0.pow(-it.power), mapOf(prefixedUnit to 1))
+                        )
+                        addConversion(conversion, baseUnit, prefixedUnit)
+                    }
+                } else {
+                    val names = line.extractNames()
+                    createUnit(names, dimensionality)
                 }
-                units.add(unit)
             }
         }
+    }
+
+    private fun createUnitChecking(
+        names: List<String>,
+        dimensionality: Map<DIMENSION, Int>,
+    ): SimpleUnit {
+        if (names.any { unitNames.containsKey(it) }) {
+            var unit: SimpleUnit? = null
+            val undefinedNames = mutableListOf<String>()
+            for (name in names) {
+                if (unitNames.containsKey(name)) {
+                    unit = unitNames[name]!!
+                } else {
+                    undefinedNames.add(name)
+                }
+            }
+            undefinedNames.forEach {
+                unitNames[it] = unit!!
+            }
+            return unit!!
+        }
+        val unit = SimpleUnit(names, dimensionality)
+        for (name in names) {
+            unitNames[name] = unit
+        }
+        units.add(unit)
+        return unit
+    }
+
+    private fun createUnit(names: List<String>, dimensionality: Map<DIMENSION, Int>): SimpleUnit {
+        val unit = SimpleUnit(names, dimensionality)
+        for (name in names) {
+            unitNames[name] = unit
+        }
+        units.add(unit)
+        return unit
     }
 
     private fun computeComplexities() {
@@ -161,8 +233,8 @@ object UnitStore {
         return processed
     }
 
-    private fun extractNames(input: String) = mutableListOf<String>().also { names ->
-        input.split(",").forEach { name ->
+    private fun String.extractNames() = mutableListOf<String>().also { names ->
+        split(",").forEach { name ->
             val builder = StringBuilder()
             for (chunk in name.trim().lowercase().split('|')) {
                 builder.append(chunk)

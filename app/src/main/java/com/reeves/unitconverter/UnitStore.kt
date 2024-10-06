@@ -12,6 +12,7 @@ object UnitStore {
     private val aliases: HashMap<String, Quantity> = HashMap()
     private val units: MutableList<SimpleUnit> = mutableListOf()
     private val conversions: MutableList<Conversion> = mutableListOf()
+    private val suggestedNames: MutableSet<String> = mutableSetOf()
 
     fun loadFromJson(context: Context) {
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
@@ -57,9 +58,11 @@ object UnitStore {
                 val aliasString = array.getString(i)
                 val equalParts = splitConversionByEquals(aliasString)
                 val quantity = equalParts[1].intoQuantity()
-                for (alias in equalParts[0].extractNames()) {
+                val names = equalParts[0].extractNames()
+                for (alias in names) {
                     aliases[alias.lowercaseGreaterThan3()] = quantity
                 }
+                suggestedNames.add(names[0])
             }
         }
 
@@ -101,7 +104,7 @@ object UnitStore {
                             prefixedNames.add(names[2].replace(PERCENT, "u"))
                         }
                         for (name in names.drop(3)) {
-                            prefixedNames.add(it.prefix + name)
+                            prefixedNames.add(name.replace(PERCENT, it.prefix))
                         }
                         val prefixedUnit = createUnitChecking(prefixedNames, dimensionality)
                         val conversion = Conversion(
@@ -122,28 +125,27 @@ object UnitStore {
         dimensionality: Map<DIMENSION, Int>,
     ): SimpleUnit {
         if (names.any { unitNames.containsKey(it) }) {
-            var unit: SimpleUnit? = null
+            var predefinedUnit: SimpleUnit? = null
             val undefinedNames = mutableListOf<String>()
             for (name in names) {
                 if (unitNames.containsKey(name)) {
-                    unit = unitNames[name]!!
+                    predefinedUnit = unitNames[name]!!
                 } else {
                     undefinedNames.add(name)
                 }
             }
-            assignNames(undefinedNames, unit!!)
-            return unit
+            assignNames(undefinedNames, predefinedUnit!!)
+            return predefinedUnit
         }
-        val unit = SimpleUnit(names, dimensionality)
-        assignNames(names, unit)
-        units.add(unit)
-        return unit
+        return createUnit(names, dimensionality)
     }
 
     private fun createUnit(names: List<String>, dimensionality: Map<DIMENSION, Int>): SimpleUnit {
         val unit = SimpleUnit(names, dimensionality)
         assignNames(names, unit)
         units.add(unit)
+        suggestedNames.add(unit.singular())
+        suggestedNames.add(unit.abbreviation())
         return unit
     }
 
@@ -263,4 +265,10 @@ object UnitStore {
         aliases[casedName]?.let { return it.units }
         throw UndefinedUnitException(casedName)
     }
+
+    fun getValidNames(): List<String> = unitNames.keys.toMutableList().also {
+        it.addAll(aliases.keys)
+    }
+
+    fun getSuggestedNames(): List<String> = suggestedNames.toList()
 }

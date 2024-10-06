@@ -66,12 +66,12 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/starting_units_label" />
 
-        <EditText
+        <MultiAutoCompleteTextView
             android:id="@+id/starting_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="0dp"
+            android:completionThreshold="0"
             android:hint="Starting Numerator units"
             android:importantForAutofill="no"
             android:inputType="text"
@@ -91,21 +91,21 @@
             android:background="@drawable/fraction_line"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@id/starting_units_left_paren"
-            app:layout_constraintTop_toTopOf="@+id/starting_units_left_paren" />
+            app:layout_constraintTop_toTopOf="@id/starting_units_left_paren" />
 
-        <EditText
+        <MultiAutoCompleteTextView
             android:id="@+id/starting_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="4dp"
+            android:completionThreshold="0"
             android:hint="Starting Denominator units"
             android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
             android:textAlignment="center"
-            app:layout_constraintEnd_toEndOf="@+id/fraction_line_1"
-            app:layout_constraintStart_toStartOf="@+id/fraction_line_1"
+            app:layout_constraintEnd_toEndOf="@id/fraction_line_1"
+            app:layout_constraintStart_toStartOf="@id/fraction_line_1"
             app:layout_constraintTop_toTopOf="@id/fraction_line_1" />
 
         <!--Ending units-->
@@ -132,7 +132,6 @@
             android:text="("
             android:textAlignment="viewStart"
             android:textSize="100sp"
-
             app:layout_constraintBottom_toBottomOf="@id/ending_units_label"
             app:layout_constraintStart_toStartOf="@id/ending_units_label"
             app:layout_constraintTop_toTopOf="@id/ending_units_label" />
@@ -151,20 +150,20 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/ending_units_label" />
 
-        <EditText
+        <MultiAutoCompleteTextView
             android:id="@+id/ending_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="0dp"
+            android:completionThreshold="0"
             android:hint="Ending Numerator units"
             android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
             android:textAlignment="center"
             app:layout_constraintBottom_toTopOf="@id/ending_denominator"
-            app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
-            app:layout_constraintStart_toStartOf="@+id/fraction_line_2" />
+            app:layout_constraintEnd_toEndOf="@id/fraction_line_2"
+            app:layout_constraintStart_toStartOf="@id/fraction_line_2" />
 
         <View
             android:id="@+id/fraction_line_2"
@@ -176,22 +175,22 @@
             android:background="@drawable/fraction_line"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@id/ending_units_left_paren"
-            app:layout_constraintTop_toTopOf="@+id/ending_units_left_paren" />
+            app:layout_constraintTop_toTopOf="@id/ending_units_left_paren" />
 
-        <EditText
+        <MultiAutoCompleteTextView
             android:id="@+id/ending_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="4dp"
+            android:completionThreshold="0"
             android:hint="Ending Denominator units"
             android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
             android:textAlignment="center"
-            app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
-            app:layout_constraintStart_toStartOf="@+id/fraction_line_2"
-            app:layout_constraintTop_toTopOf="@+id/fraction_line_2" />
+            app:layout_constraintEnd_toEndOf="@id/fraction_line_2"
+            app:layout_constraintStart_toStartOf="@id/fraction_line_2"
+            app:layout_constraintTop_toTopOf="@id/fraction_line_2" />
         <!--Convert button-->
         <Button
             android:id="@+id/convert_button"

@@ -14,7 +14,7 @@
 
         <EditText
             android:id="@+id/input_value"
-            android:layout_width="0dp"
+            android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             android:ems="30"
@@ -22,7 +22,6 @@
             android:importantForAutofill="no"
             android:inputType="numberDecimal|numberSigned"
             android:minHeight="48dp"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
         <!--Starting units-->
@@ -31,8 +30,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:text="Starting Units:"
+            android:layout_marginTop="48dp"
+            android:text="Starting\nUnits:"
+            android:textAlignment="center"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/input_value" />
@@ -41,14 +41,16 @@
             android:id="@+id/starting_units_left_paren"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="64dp"
             android:width="50dp"
             android:ems="1"
             android:padding="0dp"
             android:text="("
             android:textAlignment="viewStart"
             android:textSize="100sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
+            app:layout_constraintBottom_toBottomOf="@id/starting_units_label"
+            app:layout_constraintStart_toStartOf="@id/starting_units_label"
+            app:layout_constraintTop_toTopOf="@id/starting_units_label" />
 
         <TextView
             android:id="@+id/starting_units_right_paren"
@@ -60,21 +62,23 @@
             android:text=")"
             android:textAlignment="viewEnd"
             android:textSize="100sp"
+            app:layout_constraintBottom_toBottomOf="@id/starting_units_label"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
+            app:layout_constraintTop_toTopOf="@id/starting_units_label" />
 
-        <EditText
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/starting_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="0dp"
+            android:backgroundTint="@color/_transparent"
+            android:completionThreshold="0"
             android:hint="Starting Numerator units"
             android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
             android:textAlignment="center"
-            app:layout_constraintBottom_toBottomOf="@+id/fraction_line_1"
+            app:layout_constraintBottom_toTopOf="@id/starting_denominator"
             app:layout_constraintEnd_toEndOf="@+id/fraction_line_1"
             app:layout_constraintStart_toStartOf="@+id/fraction_line_1" />
 
@@ -87,56 +91,52 @@
             android:layout_marginEnd="16dp"
             android:background="@drawable/fraction_line"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/starting_units_label" />
+            app:layout_constraintStart_toStartOf="@id/starting_units_left_paren"
+            app:layout_constraintTop_toTopOf="@id/starting_units_left_paren" />
 
-        <EditText
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/starting_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="4dp"
+            android:backgroundTint="@color/_transparent"
+            android:completionThreshold="0"
             android:hint="Starting Denominator units"
             android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
             android:textAlignment="center"
-            app:layout_constraintEnd_toEndOf="@+id/fraction_line_1"
-            app:layout_constraintStart_toStartOf="@+id/fraction_line_1"
-            app:layout_constraintTop_toTopOf="@+id/fraction_line_1" />
-        <!--Separator-->
-        <View
-            android:id="@+id/starting_to_ending_separator"
-            android:layout_width="0dp"
-            android:layout_height="30dp"
-            android:background="@android:color/transparent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/starting_denominator" />
+            app:layout_constraintEnd_toEndOf="@id/fraction_line_1"
+            app:layout_constraintStart_toStartOf="@id/fraction_line_1"
+            app:layout_constraintTop_toTopOf="@id/fraction_line_1" />
+
         <!--Ending units-->
         <TextView
             android:id="@+id/ending_units_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:text="Ending Units:"
+            android:layout_marginTop="86dp"
+            android:text="Ending\nUnits:"
+            android:textAlignment="center"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/starting_to_ending_separator" />
+            app:layout_constraintTop_toBottomOf="@id/starting_units_label" />
 
         <TextView
             android:id="@+id/ending_units_left_paren"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="64dp"
             android:width="50dp"
             android:ems="1"
             android:padding="0dp"
             android:text="("
             android:textAlignment="viewStart"
             android:textSize="100sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
+            app:layout_constraintBottom_toBottomOf="@id/ending_units_label"
+            app:layout_constraintStart_toStartOf="@id/ending_units_label"
+            app:layout_constraintTop_toTopOf="@id/ending_units_label" />
 
         <TextView
             android:id="@+id/ending_units_right_paren"
@@ -148,23 +148,25 @@
             android:text=")"
             android:textAlignment="viewEnd"
             android:textSize="100sp"
+            app:layout_constraintBottom_toBottomOf="@id/ending_units_label"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
+            app:layout_constraintTop_toTopOf="@id/ending_units_label" />
 
-        <EditText
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/ending_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="0dp"
+            android:backgroundTint="@color/_transparent"
+            android:completionThreshold="0"
             android:hint="Ending Numerator units"
             android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
             android:textAlignment="center"
-            app:layout_constraintBottom_toBottomOf="@+id/fraction_line_2"
-            app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
-            app:layout_constraintStart_toStartOf="@+id/fraction_line_2" />
+            app:layout_constraintBottom_toTopOf="@id/ending_denominator"
+            app:layout_constraintEnd_toEndOf="@id/fraction_line_2"
+            app:layout_constraintStart_toStartOf="@id/fraction_line_2" />
 
         <View
             android:id="@+id/fraction_line_2"
@@ -175,23 +177,24 @@
             android:layout_marginEnd="16dp"
             android:background="@drawable/fraction_line"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ending_units_label" />
+            app:layout_constraintStart_toStartOf="@id/ending_units_left_paren"
+            app:layout_constraintTop_toTopOf="@id/ending_units_left_paren" />
 
-        <EditText
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/ending_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:ems="30"
+            android:layout_margin="4dp"
+            android:backgroundTint="@color/_transparent"
+            android:completionThreshold="0"
             android:hint="Ending Denominator units"
             android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
             android:textAlignment="center"
-            app:layout_constraintEnd_toEndOf="@+id/fraction_line_2"
-            app:layout_constraintStart_toStartOf="@+id/fraction_line_2"
-            app:layout_constraintTop_toTopOf="@+id/fraction_line_2" />
+            app:layout_constraintEnd_toEndOf="@id/fraction_line_2"
+            app:layout_constraintStart_toStartOf="@id/fraction_line_2"
+            app:layout_constraintTop_toTopOf="@id/fraction_line_2" />
         <!--Convert button-->
         <Button
             android:id="@+id/convert_button"
@@ -221,12 +224,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:minHeight="36dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/output_value_label"
-            app:setTextColor="@android:color/black"
-            app:setTextSize="14sp"
-            app:setViewBackgroundColor="@android:color/white" />
+            app:setTextSize="14sp">
+        </com.reeves.unitconverter.MathView>
 
         <TextView
             android:id="@+id/conversion_steps_label"
@@ -243,12 +246,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:minHeight="36dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/conversion_steps_label"
-            app:setTextColor="@android:color/black"
-            app:setTextSize="14sp"
-            app:setViewBackgroundColor="@android:color/white" />
+            app:setTextSize="14sp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

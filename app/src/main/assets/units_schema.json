@@ -1,0 +1,26 @@
+{
+    "type": "object",
+    "properties": {
+        "units": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "conversions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "aliases": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

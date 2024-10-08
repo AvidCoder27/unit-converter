@@ -8,5 +8,6 @@ enum class DIMENSION {
     ELECTRIC_CURRENT, //'I'
     AMOUNT_OF_SUBSTANCE, //'n'
     LUMINOUS_INTENSITY, //'L'
-    ROTATION //'r
+    ROTATION, //'r'
+    DIGITAL_INFORMATION //'b'
 }

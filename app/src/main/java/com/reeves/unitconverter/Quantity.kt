@@ -50,6 +50,6 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
     override fun toString(): String = buildString {
         append(value)
         append(" ")
-        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString("×"))
+        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString(" * "))
     }
 }

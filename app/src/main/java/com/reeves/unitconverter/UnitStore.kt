@@ -3,81 +3,164 @@ package com.reeves.unitconverter
 import android.content.Context
 import android.util.Log
 import org.json.JSONObject
+import kotlin.math.pow
+
+private const val PERCENT = "%"
 
 object UnitStore {
     private val unitNames: HashMap<String, SimpleUnit> = HashMap()
     private val aliases: HashMap<String, Quantity> = HashMap()
     private val units: MutableList<SimpleUnit> = mutableListOf()
     private val conversions: MutableList<Conversion> = mutableListOf()
+    private val suggestedNames: MutableSet<String> = mutableSetOf()
 
     fun loadFromJson(context: Context) {
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
         val jsonObject = JSONObject(jsonString)
+        loadUnits(jsonObject)
+        loadAliases(jsonObject)
+        loadConversions(jsonObject)
+        computeComplexities()
+    }
 
-        jsonObject.getJSONArray("units").let { array ->
-            for (i in 0 until array.length()) {
-                val alikeUnitsArray = array.getJSONArray(i)
-                val dimensionality: Map<DIMENSION, Int> =
-                    alikeUnitsArray.getString(0).parseUnitsToStringMap().mapKeys {
-                        when (it.key) {
-                            "d" -> DIMENSION.LENGTH
-                            "t" -> DIMENSION.TIME
-                            "T" -> DIMENSION.TEMPERATURE
-                            "m" -> DIMENSION.MASS
-                            "I" -> DIMENSION.ELECTRIC_CURRENT
-                            "n" -> DIMENSION.AMOUNT_OF_SUBSTANCE
-                            "L" -> DIMENSION.LUMINOUS_INTENSITY
-                            "r" -> DIMENSION.ROTATION
-                            else -> throw Exception("Invalid dimension when loading units")
-                        }
-                    }
-                for (j in 1 until alikeUnitsArray.length()) {
-                    val names = extractNames(alikeUnitsArray.getString(j))
-                    val unit = SimpleUnit(names, dimensionality)
-                    for (name in names) {
-                        unitNames[name] = unit
-                    }
-                    units.add(unit)
-                }
-            }
-        }
-
-        jsonObject.getJSONArray("aliases").let { array ->
-            for (i in 0 until array.length()) {
-                val aliasString = array.getString(i).lowercase()
-                val equalParts = splitConversionByEquals(aliasString)
-                val quantity = equalParts[1].intoQuantity()
-                for (alias in extractNames(equalParts[0])) {
-                    aliases[alias] = quantity
-                }
-            }
-        }
-
+    private fun loadConversions(jsonObject: JSONObject) =
         jsonObject.getJSONArray("conversions").let { array ->
             for (i in 0 until array.length()) {
-                val conversionString = array.getString(i).lowercase()
+                val conversionString = array.getString(i)
                 val equalParts = splitConversionByEquals(conversionString)
                 val conversion =
                     Conversion(equalParts[0].intoQuantity(), equalParts[1].intoQuantity())
                 conversion.getLonelies().let { (numerator, denominator) ->
-                    numerator?.addConversion(conversion)
-                    denominator?.addConversion(conversion)
-                    conversions.add(conversion)
-                    conversion.denominator.forEach {
-                        it.key.addConnection(conversion)
-                    }
-                    conversion.numerator.forEach {
-                        it.key.addConnection(conversion)
-                    }
+                    addConversion(conversion, numerator, denominator)
                 }
             }
         }
 
+    private fun addConversion(
+        conversion: Conversion,
+        alpha: SimpleUnit?,
+        beta: SimpleUnit?,
+    ) {
+        alpha?.addConversion(conversion)
+        beta?.addConversion(conversion)
+        conversions.add(conversion)
+        conversion.denominator.forEach {
+            it.key.addConnection(conversion)
+        }
+        conversion.numerator.forEach {
+            it.key.addConnection(conversion)
+        }
+    }
+
+    private fun loadAliases(jsonObject: JSONObject) =
+        jsonObject.getJSONArray("aliases").let { array ->
+            for (i in 0 until array.length()) {
+                val aliasString = array.getString(i)
+                val equalParts = splitConversionByEquals(aliasString)
+                val quantity = equalParts[1].intoQuantity()
+                val names = equalParts[0].extractNames()
+                for (alias in names) {
+                    aliases[alias.lowercaseGreaterThan3()] = quantity
+                }
+                suggestedNames.add(names[0])
+            }
+        }
+
+    private fun loadUnits(jsonObject: JSONObject) = jsonObject.getJSONArray("units").let { array ->
+        for (i in 0 until array.length()) {
+            val alikeUnitsArray = array.getJSONArray(i)
+            val dimensionality: Map<DIMENSION, Int> =
+                alikeUnitsArray.getString(0).parseUnitsToStringMap().mapKeys {
+                    when (it.key) {
+                        "d" -> DIMENSION.LENGTH
+                        "t" -> DIMENSION.TIME
+                        "T" -> DIMENSION.TEMPERATURE
+                        "m" -> DIMENSION.MASS
+                        "I" -> DIMENSION.ELECTRIC_CURRENT
+                        "n" -> DIMENSION.AMOUNT_OF_SUBSTANCE
+                        "L" -> DIMENSION.LUMINOUS_INTENSITY
+                        "r" -> DIMENSION.ROTATION
+                        "b" -> DIMENSION.DIGITAL_INFORMATION
+                        else -> throw Exception("Invalid dimension when loading units")
+                    }
+                }
+            for (j in 1 until alikeUnitsArray.length()) {
+                val line = alikeUnitsArray.getString(j)
+                if (line.startsWith(PERCENT)) {
+                    val names = line.extractNames()
+                    assert(names.size >= 3) { "Prefixed unit `${names[0]}` must include a singular, plural, and abbreviated form" }
+                    names.forEach {
+                        assert(it.contains(PERCENT)) { "Prefixed unit `${names[0]}` must contain $PERCENT in all names" }
+                    }
+                    val baseUnit = createUnit(names.map { it.replace(PERCENT, "") }, dimensionality)
+                    val baseQuantity = Quantity(1.0, mapOf(baseUnit to 1))
+                    Prefix.PREFIXES.forEach {
+                        val prefixedNames = mutableListOf(
+                            names[0].replace(PERCENT, it.prefix),
+                            names[1].replace(PERCENT, it.prefix),
+                            names[2].replace(PERCENT, it.label)
+                        )
+                        if (it.prefix == "micro") {
+                            prefixedNames.add(names[2].replace(PERCENT, "u"))
+                        }
+                        for (name in names.drop(3)) {
+                            prefixedNames.add(name.replace(PERCENT, it.prefix))
+                        }
+                        val prefixedUnit = createUnitChecking(prefixedNames, dimensionality)
+                        val conversion = Conversion(
+                            baseQuantity, Quantity(10.0.pow(-it.power), mapOf(prefixedUnit to 1))
+                        )
+                        addConversion(conversion, baseUnit, prefixedUnit)
+                    }
+                } else {
+                    val names = line.extractNames()
+                    createUnit(names, dimensionality)
+                }
+            }
+        }
+    }
+
+    private fun createUnitChecking(
+        names: List<String>,
+        dimensionality: Map<DIMENSION, Int>,
+    ): SimpleUnit {
+        if (names.any { unitNames.containsKey(it) }) {
+            var predefinedUnit: SimpleUnit? = null
+            val undefinedNames = mutableListOf<String>()
+            for (name in names) {
+                if (unitNames.containsKey(name)) {
+                    predefinedUnit = unitNames[name]!!
+                } else {
+                    undefinedNames.add(name)
+                }
+            }
+            assignNames(undefinedNames, predefinedUnit!!)
+            return predefinedUnit
+        }
+        return createUnit(names, dimensionality)
+    }
+
+    private fun createUnit(names: List<String>, dimensionality: Map<DIMENSION, Int>): SimpleUnit {
+        val unit = SimpleUnit(names, dimensionality)
+        assignNames(names, unit)
+        units.add(unit)
+        suggestedNames.add(unit.singular())
+        suggestedNames.add(unit.abbreviation())
+        return unit
+    }
+
+    private fun assignNames(names: List<String>, unit: SimpleUnit) {
+        names.forEach {
+            unitNames[it.lowercaseGreaterThan3()] = unit
+        }
+    }
+
+    private fun computeComplexities() {
         val unprocessed = units.toMutableSet()
         val distance: HashMap<SimpleUnit, Int> = hashMapOf()
 
         setOf(
-            "m", "s", "K", "kg", "A", "mol", "cd", "rotation"
+            "m", "s", "K", "kg", "A", "mol", "cd", "rotation", "byte"
         ).forEach { name ->
             val fundamental = getUnit(name).keys.first()
             fundamental.complexity = 0
@@ -86,7 +169,8 @@ object UnitStore {
 
         var index = unprocessed.size
         while (unprocessed.isNotEmpty()) {
-            val processed = bfsForComplexity(unprocessed.elementAt(index % unprocessed.size), distance)
+            val processed =
+                bfsForComplexity(unprocessed.elementAt(index % unprocessed.size), distance)
             var countRemoved = 0
             unprocessed.removeAll {
                 if (it in processed) {
@@ -105,13 +189,12 @@ object UnitStore {
         distance.forEach { (unit, distance) ->
             unit.complexity = distance
         }
-
-        units.sortedBy { it.complexity }.forEach {
-            Log.i("UnitStore", "Complexity of ${it.singular()} is ${it.complexity}")
-        }
     }
 
-    private fun bfsForComplexity(start: SimpleUnit, distance: HashMap<SimpleUnit, Int>): List<SimpleUnit> {
+    private fun bfsForComplexity(
+        start: SimpleUnit,
+        distance: HashMap<SimpleUnit, Int>,
+    ): List<SimpleUnit> {
         val processed = mutableListOf<SimpleUnit>()
         if (!distance.containsKey(start)) return processed
         val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
@@ -153,21 +236,22 @@ object UnitStore {
         return processed
     }
 
-    private fun extractNames(input: String) = mutableListOf<String>().also { names ->
-        input.split(",").forEach { name ->
-            val builder = StringBuilder()
-            for (chunk in name.trim().lowercase().split('|')) {
-                builder.append(chunk)
-                names.add(builder.toString())
-            }
-        }
-    }
-
     private fun splitConversionByEquals(string: String): List<String> =
         string.split("=").map { it.trim() }.let {
             require(it.size == 2) { "Invalid conversion: $string" }
             return it
         }
+
+
+    private fun String.extractNames() = mutableListOf<String>().also { names ->
+        split(",").forEach { name ->
+            val builder = StringBuilder()
+            for (chunk in name.trim().split('|')) {
+                builder.append(chunk)
+                names.add(builder.toString())
+            }
+        }
+    }
 
     /**
      * For a name of a SimpleUnit, this will just return a mapOf(it to 1)
@@ -176,8 +260,51 @@ object UnitStore {
      * @throws UndefinedUnitException if the unit is not defined as a unit or an alias
      */
     fun getUnit(name: String): Map<SimpleUnit, Int> {
-        unitNames[name.lowercase()]?.let { return mapOf(it to 1) }
-        aliases[name.lowercase()]?.let { return it.units }
-        throw UndefinedUnitException(name)
+        val casedName = name.lowercaseGreaterThan3()
+        unitNames[casedName]?.let { return mapOf(it to 1) }
+        aliases[casedName]?.let { return it.units }
+        throw UndefinedUnitException(casedName)
+    }
+
+    fun getValidNames(): List<String> = unitNames.keys.toMutableList().also {
+        it.addAll(aliases.keys)
+    }
+
+    fun getSuggestedNames(): List<String> = suggestedNames.sortedWith { str1, str2 ->
+        val len1 = str1.length
+        val len2 = str2.length
+        // Prioritize length comparison first
+        if (len1 != len2) {
+            return@sortedWith len1.compareTo(len2)
+        }
+
+        // If lengths are equal, compare characters
+        val lim = minOf(len1, len2)
+        for (k in 0 until lim) {
+            val c1 = str1[k]
+            val c2 = str2[k]
+            if (c1 != c2) {
+                val order1 = when (c1) {
+                    in 'a'..'z' -> 0
+                    in 'A'..'Z' -> 1
+                    ' ' -> 2
+                    else -> 3
+                }
+                val order2 = when (c2) {
+                    in 'a'..'z' -> 0
+                    in 'A'..'Z' -> 1
+                    ' ' -> 2
+                    else -> 3
+                }
+                if (order1 != order2) {
+                    return@sortedWith order1.compareTo(order2)
+                } else {
+                    return@sortedWith c1.compareTo(c2)
+                }
+            }
+        }
+
+        // If strings are equal, return 0
+        return@sortedWith 0
     }
 }

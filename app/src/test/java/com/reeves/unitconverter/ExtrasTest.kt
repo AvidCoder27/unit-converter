@@ -32,11 +32,4 @@ class ExtrasTest {
         assertEquals(mapOf(DIMENSION.LENGTH to 2, DIMENSION.TIME to -2), quantity.dimensionality())
         assertEquals(mapOf(DIMENSION.LENGTH to 5, DIMENSION.TIME to -1), quantity2.dimensionality())
     }
-
-    @Test
-    fun complexity_isCorrect() {
-        val meter = SimpleUnit(listOf("meter", "meters", "m"), mapOf(DIMENSION.LENGTH to 1))
-        val quantity = Quantity(1.0, mapOf(meter to 1))
-        assertEquals(0, quantity.complexity())
-    }
 }

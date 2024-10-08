@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="_white">#FFFFFFFF</color>
+    <color name="_light_pink_smoke">#DEDAF2</color>
+    <color name="_pink_smoke">#D8D1F0</color>
+    <color name="_biloba_flower">#C3BCF0</color>
+    <color name="_pink_lavender">#7364e1</color>
+    <color name="_victoria">#4f418c</color>
+    <color name="_ebony_clay">#2D2942</color>
+    <color name="_clay_gray">#E64E4966</color>
+    <color name="_light_clay">#3C394E</color>
+    <color name="_mirage">#181825</color>
+    <color name="_black">#FF000000</color>
+    <color name="_magenta">#E600FF</color>
+    <color name="_transparent">#00000000</color>
+    <color name="list_item_background">@color/_biloba_flower</color>
 </resources>

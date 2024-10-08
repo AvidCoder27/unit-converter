@@ -270,5 +270,41 @@ object UnitStore {
         it.addAll(aliases.keys)
     }
 
-    fun getSuggestedNames(): List<String> = suggestedNames.toList()
+    fun getSuggestedNames(): List<String> = suggestedNames.sortedWith { str1, str2 ->
+        val len1 = str1.length
+        val len2 = str2.length
+        // Prioritize length comparison first
+        if (len1 != len2) {
+            return@sortedWith len1.compareTo(len2)
+        }
+
+        // If lengths are equal, compare characters
+        val lim = minOf(len1, len2)
+        for (k in 0 until lim) {
+            val c1 = str1[k]
+            val c2 = str2[k]
+            if (c1 != c2) {
+                val order1 = when (c1) {
+                    in 'a'..'z' -> 0
+                    in 'A'..'Z' -> 1
+                    ' ' -> 2
+                    else -> 3
+                }
+                val order2 = when (c2) {
+                    in 'a'..'z' -> 0
+                    in 'A'..'Z' -> 1
+                    ' ' -> 2
+                    else -> 3
+                }
+                if (order1 != order2) {
+                    return@sortedWith order1.compareTo(order2)
+                } else {
+                    return@sortedWith c1.compareTo(c2)
+                }
+            }
+        }
+
+        // If strings are equal, return 0
+        return@sortedWith 0
+    }
 }

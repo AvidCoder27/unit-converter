@@ -31,11 +31,15 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
         UnitStore.loadFromJson(this)
 
         val adapter = ArrayAdapter(
-            this, android.R.layout.simple_dropdown_item_1line, UnitStore.getSuggestedNames()
+            this, R.layout.list_item, UnitStore.getSuggestedNames()
         )
+        val outputMathView = findViewById<MathView>(R.id.output_value)
+        val stepsMathView = findViewById<MathView>(R.id.conversion_steps)
+
         val startingNumerator =
             findViewById<MultiAutoCompleteTextView>(R.id.starting_numerator).setup(adapter)
         val startingDenominator =
@@ -45,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         val endingDenominator =
             findViewById<MultiAutoCompleteTextView>(R.id.ending_denominator).setup(adapter)
         val converter =
-            Converter(findViewById(R.id.output_value), findViewById(R.id.conversion_steps))
+            Converter(outputMathView, stepsMathView)
 
         findViewById<Button>(R.id.convert_button).setOnClickListener {
             @Suppress("DEPRECATION") ViewCompat.getWindowInsetsController(window.decorView)

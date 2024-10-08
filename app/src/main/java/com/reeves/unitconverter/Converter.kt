@@ -22,8 +22,8 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         val right =
             endingNumeratorString.intoQuantity().divide(endingDenominatorString.intoQuantity())
                 .removeValue().clean()
-        Log.d(TAG, "convert: left = `$unvalidatedLeft` ")
-        Log.d(TAG, "convert: right = `$right` ")
+        Log.d(TAG, "convert: left = `$unvalidatedLeft`")
+        Log.d(TAG, "convert: right = `$right`")
         val flip = validateConversion(unvalidatedLeft, right)
         val left = if (flip) unvalidatedLeft.inverse() else unvalidatedLeft
 

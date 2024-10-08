@@ -12,9 +12,9 @@
             "nautical mile|s, nmi",
             "hand|s",
             "light-year|s, lyr|s, ly, light year|s, lightyear|s",
-			"fathom|s",
-			"angstrom|s, Å",
-			"beard-second|s"
+            "fathom|s",
+            "angstrom|s, Å",
+            "beard-second|s"
         ],
         [
             "t",
@@ -22,14 +22,14 @@
             "minute|s, min|s",
             "hour|s, hr|s",
             "day|s",
-			"week|s",
+            "week|s",
             "month|s",
             "calendar year|s, year|s, yr|s",
             "decade|s",
             "centuries, century",
-			"eon|s",
-			"millennium|s",
-			"fortnight|s"
+            "eon|s",
+            "millennium|s",
+            "fortnight|s"
         ],
         [
             "T",
@@ -46,7 +46,7 @@
             "short ton|s, us ton|s",
             "ounce|s, oz",
             "carat|s",
-			"stone|s"
+            "stone|s"
         ],
         [
             "I",
@@ -73,7 +73,6 @@
             "bit|s, b",
             "nibble|s",
             "byte|s, B",
-
             "kilobyte|s, kB, KB",
             "megabyte|s, MB",
             "gigabyte|s, GB",
@@ -82,7 +81,6 @@
             "exabyte|s, EB",
             "zettabyte|s, ZB",
             "yottabyte|s, YB",
-
             "kibibyte|s, KiB",
             "mebibyte|s, MiB",
             "gigibyte|s, GiB",
@@ -99,7 +97,7 @@
         ],
         [
             "d*d*d",
-            "milliliter|s, ml, cc",
+            "milliliter|s, mL, cc, ml",
             "%liter|s, %L, %litre|s",
             "metric tablespoon|s",
             "fluid ounce|s, fl oz, fl. oz.",
@@ -146,19 +144,20 @@
         ]
     ],
     "conversions": [
-		"1 beard-second = 10 nanometers",
-		"1 fathom = 2 yards",
-		"1 stone = 14 lbs",
-		"1 eon = 1e9 years",
-		"1 millennium = 1000 years",
-		"1 angstrom = 1e-10 meters",
-		"1 fortnight = 2 weeks",
-		"1 week = 7 days",
+        "12 months = 1 calendar year",
+        "1 beard-second = 10 nanometers",
+        "1 fathom = 2 yards",
+        "1 stone = 14 lbs",
+        "1 eon = 1e9 years",
+        "1 millennium = 1000 years",
+        "1 angstrom = 1e-10 meters",
+        "1 fortnight = 2 weeks",
+        "1 week = 7 days",
         "760 mmHg = 1 atm",
         "1 bar = 1000 millibars",
         "psi = lbf / in^2",
         "pascal = N/m^2",
-        "1000 kPa = 1 pascal",
+        "1 kPa = 1000 pascal",
         "1 atm = 101.325 kPa",
         "bar = 100.000 kPa",
         "btu = 1055 J",

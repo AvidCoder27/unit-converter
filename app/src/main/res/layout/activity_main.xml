@@ -66,11 +66,12 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/starting_units_label" />
 
-        <MultiAutoCompleteTextView
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/starting_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="0dp"
+            android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
             android:hint="Starting Numerator units"
             android:importantForAutofill="no"
@@ -93,11 +94,12 @@
             app:layout_constraintStart_toStartOf="@id/starting_units_left_paren"
             app:layout_constraintTop_toTopOf="@id/starting_units_left_paren" />
 
-        <MultiAutoCompleteTextView
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/starting_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
+            android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
             android:hint="Starting Denominator units"
             android:importantForAutofill="no"
@@ -150,11 +152,12 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/ending_units_label" />
 
-        <MultiAutoCompleteTextView
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/ending_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="0dp"
+            android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
             android:hint="Ending Numerator units"
             android:importantForAutofill="no"
@@ -177,11 +180,12 @@
             app:layout_constraintStart_toStartOf="@id/ending_units_left_paren"
             app:layout_constraintTop_toTopOf="@id/ending_units_left_paren" />
 
-        <MultiAutoCompleteTextView
+        <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/ending_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
+            android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
             android:hint="Ending Denominator units"
             android:importantForAutofill="no"
@@ -220,12 +224,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:minHeight="36dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/output_value_label"
-            app:setTextColor="@android:color/black"
-            app:setTextSize="14sp"
-            app:setViewBackgroundColor="@android:color/white" />
+            app:setTextSize="14sp">
+        </com.reeves.unitconverter.MathView>
 
         <TextView
             android:id="@+id/conversion_steps_label"
@@ -242,12 +246,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:minHeight="36dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/conversion_steps_label"
-            app:setTextColor="@android:color/black"
-            app:setTextSize="14sp"
-            app:setViewBackgroundColor="@android:color/white" />
+            app:setTextSize="14sp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

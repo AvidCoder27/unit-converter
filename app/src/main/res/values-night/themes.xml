@@ -2,6 +2,15 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.UnitConverter" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
-        <item name="colorContainer">@android:color/darker_gray</item>
+        <item name="android:windowBackground">@color/_mirage</item>
+        <item name="setViewBackgroundColor">@color/list_item_background</item>
+        <item name="colorPrimary">@color/_pink_lavender</item>
+        <item name="colorOnPrimary">@color/_pink_smoke</item>
+        <item name="android:textColor">@color/_pink_smoke</item>
+        <item name="editTextColor">@color/_pink_smoke</item>
+        <item name="setTextColor">@color/_light_pink_smoke</item>
+        <item name="colorSecondary">@color/_pink_smoke</item>
+        <item name="colorOnSecondary">@color/_victoria</item>
     </style>
+    <color name="list_item_background">@color/_light_clay</color>
 </resources>

@@ -1,5 +1,9 @@
 package com.reeves.unitconverter
 
+import android.annotation.SuppressLint
+import android.view.MotionEvent
+import android.widget.EditText
+
 data class RunningAnswer(var value: Double) {
     override fun toString(): String = value.toString()
 }
@@ -33,6 +37,25 @@ fun String.intoQuantity(): Quantity {
         }.clean())
     }
 }
+
+fun <K, V> HashMap<K, V>.distinctValues(): Map<K, V> {
+    val seenValues = mutableSetOf<V>()
+    val distinctMap = mutableMapOf<K, V>()
+
+    for ((key, value) in this) {
+        if (seenValues.add(value)) {
+            distinctMap[key] = value
+        }
+    }
+
+    return distinctMap
+}
+
+fun <T> MutableCollection<Pair<T, String>>.add(first: T, second: String) = add(
+    Pair(
+        first, "($second)"
+    )
+)
 
 fun String.lowercaseGreaterThan3() = if (this.length > 2) this.lowercase() else this
 
@@ -77,4 +100,28 @@ fun String.extractValue(): Pair<Double, String> {
         if (it == null) Pair(1.0, this.trim())
         else Pair(it.value.trim().toDouble(), substring(it.range.last + 1).trim())
     }
+}
+
+@SuppressLint("ClickableViewAccessibility")
+fun EditText.onDrawableEndClick(action: (EditText) -> Unit) {
+    setOnTouchListener { v, event ->
+        if (event.action == MotionEvent.ACTION_UP) {
+            v as EditText
+            val end = v.right
+            if (event.rawX >= (end - v.compoundPaddingEnd)) {
+                action.invoke(v)
+                return@setOnTouchListener true
+            }
+        }
+        return@setOnTouchListener false
+    }
+}
+
+fun EditText.clearTextOnDrawableEndClick() {
+    onDrawableEndClick { it.fullClear() }
+}
+
+fun EditText.fullClear() {
+    text.clear()
+    clearFocus()
 }

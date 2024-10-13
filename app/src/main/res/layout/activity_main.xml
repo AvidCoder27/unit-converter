@@ -14,9 +14,10 @@
 
         <EditText
             android:id="@+id/input_value"
-            android:layout_width="250dp"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:drawableEnd="@drawable/baseline_clear_24"
             android:ems="30"
             android:hint="Value to convert"
             android:importantForAutofill="no"
@@ -24,6 +25,16 @@
             android:minHeight="48dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+        <Button
+            android:id="@+id/clear_all"
+            android:layout_width="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/input_value"
+            app:layout_constraintTop_toTopOf="@id/input_value"
+            app:layout_constraintBottom_toBottomOf="@id/input_value"
+            android:text="Clear All"/>
+
         <!--Starting units-->
         <TextView
             android:id="@+id/starting_units_label"
@@ -70,9 +81,10 @@
             android:id="@+id/starting_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="0dp"
+            android:layout_marginHorizontal="8dp"
             android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
+            android:drawableEnd="@drawable/baseline_clear_24"
             android:hint="Starting Numerator units"
             android:importantForAutofill="no"
             android:inputType="text"
@@ -98,9 +110,10 @@
             android:id="@+id/starting_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="4dp"
+            android:layout_marginHorizontal="8dp"
             android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
+            android:drawableEnd="@drawable/baseline_clear_24"
             android:hint="Starting Denominator units"
             android:importantForAutofill="no"
             android:inputType="text"
@@ -156,9 +169,10 @@
             android:id="@+id/ending_numerator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="0dp"
+            android:layout_marginHorizontal="8dp"
             android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
+            android:drawableEnd="@drawable/baseline_clear_24"
             android:hint="Ending Numerator units"
             android:importantForAutofill="no"
             android:inputType="text"
@@ -180,13 +194,16 @@
             app:layout_constraintStart_toStartOf="@id/ending_units_left_paren"
             app:layout_constraintTop_toTopOf="@id/ending_units_left_paren" />
 
+        <!--Convert button-->
         <androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
             android:id="@+id/ending_denominator"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="4dp"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginTop="4dp"
             android:backgroundTint="@color/_transparent"
             android:completionThreshold="0"
+            android:drawableEnd="@drawable/baseline_clear_24"
             android:hint="Ending Denominator units"
             android:importantForAutofill="no"
             android:inputType="text"
@@ -195,7 +212,7 @@
             app:layout_constraintEnd_toEndOf="@id/fraction_line_2"
             app:layout_constraintStart_toStartOf="@id/fraction_line_2"
             app:layout_constraintTop_toTopOf="@id/fraction_line_2" />
-        <!--Convert button-->
+
         <Button
             android:id="@+id/convert_button"
             android:layout_width="wrap_content"
@@ -228,8 +245,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/output_value_label"
-            app:setTextSize="14sp">
-        </com.reeves.unitconverter.MathView>
+            app:setTextSize="14sp"></com.reeves.unitconverter.MathView>
 
         <TextView
             android:id="@+id/conversion_steps_label"

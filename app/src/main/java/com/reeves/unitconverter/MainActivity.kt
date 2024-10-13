@@ -16,7 +16,7 @@ private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
-    private fun MultiAutoCompleteTextView.setup(adapter: ArrayAdapter<String>): MultiAutoCompleteTextView {
+    private fun <T> MultiAutoCompleteTextView.setup(adapter: ArrayAdapter<T>): MultiAutoCompleteTextView {
         setAdapter(adapter)
         setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         return this
@@ -35,11 +35,12 @@ class MainActivity : AppCompatActivity() {
         UnitStore.loadFromJson(this)
 
         val adapter = ArrayAdapter(
-            this, R.layout.list_item, UnitStore.getSuggestedNames()
+            this, R.layout.list_item, UnitStore.getSuggestedNames().map { it.first }
         )
         val outputMathView = findViewById<MathView>(R.id.output_value)
         val stepsMathView = findViewById<MathView>(R.id.conversion_steps)
 
+        val inputValueField = findViewById<EditText>(R.id.input_value)
         val startingNumerator =
             findViewById<MultiAutoCompleteTextView>(R.id.starting_numerator).setup(adapter)
         val startingDenominator =
@@ -48,15 +49,32 @@ class MainActivity : AppCompatActivity() {
             findViewById<MultiAutoCompleteTextView>(R.id.ending_numerator).setup(adapter)
         val endingDenominator =
             findViewById<MultiAutoCompleteTextView>(R.id.ending_denominator).setup(adapter)
-        val converter =
-            Converter(outputMathView, stepsMathView)
+
+        val allFields = listOf(
+            inputValueField,
+            startingNumerator,
+            startingDenominator,
+            endingNumerator,
+            endingDenominator
+        )
+        allFields.forEach {
+            it.clearTextOnDrawableEndClick()
+        }
+
+        val converter = Converter(outputMathView, stepsMathView)
+
+        findViewById<Button>(R.id.clear_all).setOnClickListener {
+            allFields.forEach { it.fullClear() }
+            outputMathView.setDisplayText("")
+            stepsMathView.setDisplayText("")
+        }
 
         findViewById<Button>(R.id.convert_button).setOnClickListener {
             @Suppress("DEPRECATION") ViewCompat.getWindowInsetsController(window.decorView)
                 ?.hide(WindowInsetsCompat.Type.ime())
             try {
                 converter.convert(
-                    findViewById<EditText>(R.id.input_value).text.toString(),
+                    inputValueField.text.toString(),
                     startingNumerator.text.toString(),
                     startingDenominator.text.toString(),
                     endingNumerator.text.toString(),

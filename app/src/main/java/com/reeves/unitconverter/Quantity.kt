@@ -48,8 +48,10 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
     override fun iterator(): Iterator<Map.Entry<SimpleUnit, Int>> = units.iterator()
 
     override fun toString(): String = buildString {
-        append(value)
-        append(" ")
-        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString(" * "))
+        if (value != 1.0) {
+            append(value)
+            append(" ")
+        }
+        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString(" × "))
     }
 }

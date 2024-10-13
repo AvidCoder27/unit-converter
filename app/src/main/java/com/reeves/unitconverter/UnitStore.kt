@@ -12,7 +12,6 @@ object UnitStore {
     private val aliases: HashMap<String, Quantity> = HashMap()
     private val units: MutableList<SimpleUnit> = mutableListOf()
     private val conversions: MutableList<Conversion> = mutableListOf()
-    private val suggestedNames: MutableSet<String> = mutableSetOf()
 
     fun loadFromJson(context: Context) {
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
@@ -59,10 +58,9 @@ object UnitStore {
                 val equalParts = splitConversionByEquals(aliasString)
                 val quantity = equalParts[1].intoQuantity()
                 val names = equalParts[0].extractNames()
-                for (alias in names) {
-                    aliases[alias.lowercaseGreaterThan3()] = quantity
+                for (name in names.first + names.second + names.third) {
+                    aliases[name.lowercaseGreaterThan3()] = quantity
                 }
-                suggestedNames.add(names[0])
             }
         }
 
@@ -70,60 +68,86 @@ object UnitStore {
         for (i in 0 until array.length()) {
             val alikeUnitsArray = array.getJSONArray(i)
             val dimensionality: Map<DIMENSION, Int> =
-                alikeUnitsArray.getString(0).parseUnitsToStringMap().mapKeys {
-                    when (it.key) {
-                        "d" -> DIMENSION.LENGTH
-                        "t" -> DIMENSION.TIME
-                        "T" -> DIMENSION.TEMPERATURE
-                        "m" -> DIMENSION.MASS
-                        "I" -> DIMENSION.ELECTRIC_CURRENT
-                        "n" -> DIMENSION.NUMBER
-                        "L" -> DIMENSION.LUMINOUS_INTENSITY
-                        "r" -> DIMENSION.ROTATION
-                        "b" -> DIMENSION.DIGITAL_INFORMATION
-                        else -> throw Exception("Invalid dimension when loading units")
-                    }
-                }
+                alikeUnitsArray.getString(0).parseUnitsToStringMap()
+                    .mapKeys { stringToDimension(it.key) }
             for (j in 1 until alikeUnitsArray.length()) {
                 val line = alikeUnitsArray.getString(j)
                 if (line.startsWith(PERCENT)) {
-                    val names = line.extractNames()
-                    assert(names.size >= 3) { "Prefixed unit `${names[0]}` must include a singular, plural, and abbreviated form" }
-                    names.forEach {
-                        assert(it.contains(PERCENT)) { "Prefixed unit `${names[0]}` must contain $PERCENT in all names" }
-                    }
-                    val baseUnit = createUnit(names.map { it.replace(PERCENT, "") }, dimensionality)
-                    val baseQuantity = Quantity(1.0, mapOf(baseUnit to 1))
-                    Prefix.PREFIXES.forEach {
-                        val prefixedNames = mutableListOf(
-                            names[0].replace(PERCENT, it.prefix),
-                            names[1].replace(PERCENT, it.prefix),
-                            names[2].replace(PERCENT, it.label)
-                        )
-                        if (it.prefix == "micro") {
-                            prefixedNames.add(names[2].replace(PERCENT, "u"))
-                        }
-                        for (name in names.drop(3)) {
-                            prefixedNames.add(name.replace(PERCENT, it.prefix))
-                        }
-                        val prefixedUnit = createUnitChecking(prefixedNames, dimensionality)
-                        val conversion = Conversion(
-                            baseQuantity, Quantity(10.0.pow(-it.power), mapOf(prefixedUnit to 1))
-                        )
-                        addConversion(conversion, baseUnit, prefixedUnit)
-                    }
+                    createPrefixedUnit(line, dimensionality)
                 } else {
                     val names = line.extractNames()
-                    createUnit(names, dimensionality)
+                    createUnit(names.first, names.second, names.third, dimensionality)
                 }
             }
         }
     }
 
+    private fun stringToDimension(s: String) = when (s) {
+        "d" -> DIMENSION.LENGTH
+        "t" -> DIMENSION.TIME
+        "T" -> DIMENSION.TEMPERATURE
+        "m" -> DIMENSION.MASS
+        "I" -> DIMENSION.ELECTRIC_CURRENT
+        "n" -> DIMENSION.NUMBER
+        "L" -> DIMENSION.LUMINOUS_INTENSITY
+        "r" -> DIMENSION.ROTATION
+        "b" -> DIMENSION.DIGITAL_INFORMATION
+        else -> throw Exception("Invalid dimension when loading units")
+    }
+
+    private fun List<String>.cleanPrefix(): List<String> = map { it.replace(PERCENT, "") }
+
+    private fun createPrefixedUnit(
+        line: String,
+        dimensionality: Map<DIMENSION, Int>,
+    ) {
+        val (singulars, plurals, abbreviations) = line.extractNames()
+        val allNames = singulars + plurals + abbreviations
+        assert(singulars.isNotEmpty() && plurals.isNotEmpty() && abbreviations.isNotEmpty()) { "Prefixed unit `$line` must include a singular, plural, and abbreviated form" }
+        allNames.forEach {
+            assert(it.contains(PERCENT)) { "Prefixed unit `$allNames` must contain $PERCENT in all names" }
+        }
+        val baseUnit = createUnit(
+            singulars.cleanPrefix(),
+            plurals.cleanPrefix(),
+            abbreviations.cleanPrefix(),
+            dimensionality
+        )
+        val baseQuantity = Quantity(1.0, mapOf(baseUnit to 1))
+        Prefix.PREFIXES.forEach { prefix ->
+            val prefixedSingulars = singulars.map {
+                it.replace(PERCENT, prefix.prefix)
+            }
+            val prefixedPlurals = plurals.map {
+                it.replace(PERCENT, prefix.prefix)
+            }
+            val prefixedAbbreviations = abbreviations.map {
+                it.replace(PERCENT, prefix.label)
+            }.toMutableList()
+
+            if (prefix.prefix == "micro") {
+                abbreviations.forEach {
+                    prefixedAbbreviations.add(it.replace(PERCENT, "u"))
+                }
+            }
+
+            val prefixedUnit = createUnitChecking(
+                prefixedSingulars, prefixedPlurals, prefixedAbbreviations, dimensionality
+            )
+            val conversion = Conversion(
+                baseQuantity, Quantity(10.0.pow(-prefix.power), mapOf(prefixedUnit to 1))
+            )
+            addConversion(conversion, baseUnit, prefixedUnit)
+        }
+    }
+
     private fun createUnitChecking(
-        names: List<String>,
+        singulars: List<String>,
+        plurals: List<String>,
+        abbreviations: List<String>,
         dimensionality: Map<DIMENSION, Int>,
     ): SimpleUnit {
+        val names = (singulars + plurals + abbreviations)
         if (names.any { unitNames.containsKey(it) }) {
             var predefinedUnit: SimpleUnit? = null
             val undefinedNames = mutableListOf<String>()
@@ -137,15 +161,18 @@ object UnitStore {
             assignNames(undefinedNames, predefinedUnit!!)
             return predefinedUnit
         }
-        return createUnit(names, dimensionality)
+        return createUnit(singulars, plurals, abbreviations, dimensionality)
     }
 
-    private fun createUnit(names: List<String>, dimensionality: Map<DIMENSION, Int>): SimpleUnit {
-        val unit = SimpleUnit(names, dimensionality)
-        assignNames(names, unit)
+    private fun createUnit(
+        singulars: List<String>,
+        plurals: List<String>,
+        abbreviations: List<String>,
+        dimensionality: Map<DIMENSION, Int>,
+    ): SimpleUnit {
+        val unit = SimpleUnit(singulars, plurals, abbreviations, dimensionality)
+        assignNames(singulars + plurals + abbreviations, unit)
         units.add(unit)
-        suggestedNames.add(unit.singular())
-        suggestedNames.add(unit.abbreviation())
         return unit
     }
 
@@ -243,15 +270,38 @@ object UnitStore {
         }
 
 
-    private fun String.extractNames() = mutableListOf<String>().also { names ->
-        split(",").forEach { name ->
-            val builder = StringBuilder()
-            for (chunk in name.trim().split('|')) {
-                builder.append(chunk)
-                names.add(builder.toString())
-            }
+    private fun String.extractNames(): Triple<List<String>, List<String>, List<String>> =
+        split(";").let { triple ->
+            assert(triple.size <= 3) { "Invalid list of names: $this" }
+            val singulars = triple[0].split(',').map { it.trim() }.filter { it.isNotEmpty() }
+
+            val abbreviations =
+                triple.getOrNull(1)?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
+                    ?: listOf()
+
+            val plurals =
+                triple.getOrNull(2)?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
+                    ?.toMutableList() ?: mutableListOf()
+
+            Triple(singulars.map { singular ->
+                val split = singular.split('|')
+                assert(split.size <= 2) { "Invalid name: $singular" }
+                if (split.size == 2) {
+                    plurals.add(singular.replace("|", ""))
+                }
+                split[0]
+            }, plurals, abbreviations.flatMap { old ->
+                mutableListOf<String>().also { news ->
+                    old.split(",").forEach { substring ->
+                        val builder = StringBuilder()
+                        for (chunk in substring.trim().split('|')) {
+                            builder.append(chunk)
+                            news.add(builder.toString())
+                        }
+                    }
+                }
+            })
         }
-    }
 
     /**
      * For a name of a SimpleUnit, this will just return a mapOf(it to 1)
@@ -263,48 +313,58 @@ object UnitStore {
         val casedName = name.lowercaseGreaterThan3()
         unitNames[casedName]?.let { return mapOf(it to 1) }
         aliases[casedName]?.let { return it.units }
+        unitNames.forEach { (key, value) ->
+            Log.e("UnitStore", "key: $key, value: $value")
+        }
         throw UndefinedUnitException(casedName)
     }
 
-    fun getValidNames(): List<String> = unitNames.keys.toMutableList().also {
-        it.addAll(aliases.keys)
-    }
-
-    fun getSuggestedNames(): List<String> = suggestedNames.sortedWith { str1, str2 ->
-        val len1 = str1.length
-        val len2 = str2.length
-        // Prioritize length comparison first
-        if (len1 != len2) {
-            return@sortedWith len1.compareTo(len2)
-        }
-
-        // If lengths are equal, compare characters
-        val lim = minOf(len1, len2)
-        for (k in 0 until lim) {
-            val c1 = str1[k]
-            val c2 = str2[k]
-            if (c1 != c2) {
-                val order1 = when (c1) {
-                    in 'a'..'z' -> 0
-                    in 'A'..'Z' -> 1
-                    ' ' -> 2
-                    else -> 3
-                }
-                val order2 = when (c2) {
-                    in 'a'..'z' -> 0
-                    in 'A'..'Z' -> 1
-                    ' ' -> 2
-                    else -> 3
-                }
-                if (order1 != order2) {
-                    return@sortedWith order1.compareTo(order2)
-                } else {
-                    return@sortedWith c1.compareTo(c2)
+    fun getSuggestedNames(): List<Pair<String, String>> =
+        mutableListOf<Pair<String, String>>().also { list ->
+            unitNames.values.distinct().forEach {
+                list.add(Pair(it.plural(), ""))
+                if (it.plural() != it.abbreviation()) {
+                    list.add(it.abbreviation(), it.plural())
                 }
             }
-        }
+            aliases.distinctValues().forEach {
+                list.add(it.key, it.value.toString())
+            }
+        }.sortedWith { str1, str2 ->
+            val len1 = str1.first.length
+            val len2 = str2.first.length
+            // Prioritize length comparison first
+            if (len1 != len2) {
+                return@sortedWith len1.compareTo(len2)
+            }
 
-        // If strings are equal, return 0
-        return@sortedWith 0
-    }
+            // If lengths are equal, compare characters
+            val lim = minOf(len1, len2)
+            for (k in 0 until lim) {
+                val c1 = str1.first[k]
+                val c2 = str2.first[k]
+                if (c1 != c2) {
+                    val order1 = when (c1) {
+                        in 'a'..'z' -> 0
+                        in 'A'..'Z' -> 1
+                        ' ' -> 2
+                        else -> 3
+                    }
+                    val order2 = when (c2) {
+                        in 'a'..'z' -> 0
+                        in 'A'..'Z' -> 1
+                        ' ' -> 2
+                        else -> 3
+                    }
+                    if (order1 != order2) {
+                        return@sortedWith order1.compareTo(order2)
+                    } else {
+                        return@sortedWith c1.compareTo(c2)
+                    }
+                }
+            }
+
+            // If strings are equal, return 0
+            return@sortedWith 0
+        }
 }

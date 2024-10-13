@@ -6,8 +6,8 @@ enum class DIMENSION {
     TEMPERATURE, //'T'
     MASS, //'m'
     ELECTRIC_CURRENT, //'I'
-    AMOUNT_OF_SUBSTANCE, //'n'
     LUMINOUS_INTENSITY, //'L'
     ROTATION, //'r'
-    DIGITAL_INFORMATION //'b'
+    DIGITAL_INFORMATION, //'b'
+    NUMBER, //'n'
 }

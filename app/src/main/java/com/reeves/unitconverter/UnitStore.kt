@@ -77,7 +77,7 @@ object UnitStore {
                         "T" -> DIMENSION.TEMPERATURE
                         "m" -> DIMENSION.MASS
                         "I" -> DIMENSION.ELECTRIC_CURRENT
-                        "n" -> DIMENSION.AMOUNT_OF_SUBSTANCE
+                        "n" -> DIMENSION.NUMBER
                         "L" -> DIMENSION.LUMINOUS_INTENSITY
                         "r" -> DIMENSION.ROTATION
                         "b" -> DIMENSION.DIGITAL_INFORMATION

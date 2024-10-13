@@ -14,7 +14,9 @@
             "light-year|s, lyr|s, ly, light year|s, lightyear|s",
             "fathom|s",
             "angstrom|s, Å",
-            "beard-second|s"
+            "beard-second|s",
+            "league|s",
+            "mil|s, thou"
         ],
         [
             "t",
@@ -55,7 +57,10 @@
         [
             "n",
             "mole|s, mol",
-            "particle|s, atom|s, molecule|s"
+            "dozen",
+            "gross",
+            "score",
+            "thing|s|, particle|s, atom|s, molecule|s"
         ],
         [
             "L",
@@ -107,12 +112,22 @@
             "pint|s, pt, US liquid pint|s, US pint|s",
             "quart|s, qt, US quart|s, US liquid quart|s",
             "gallon|s, gal|s, US gallon|s, US gal, US liquid gallon|s",
+
+            "imperial bushel|s",
+            "imperial peck|s",
             "imperial gallon|s",
             "imperial quart|s",
             "imperial pint|s",
             "imperial gill|s",
-            "imperial ounce|s, imperial oz",
-            "US dry pint|s"
+            "imperial ounce|s, imperial oz, imperial fluid ounce|s, imperial fl oz",
+
+            "US bushel|s, bushel|s",
+            "US peck|s, peck|s",
+            "US dry gallon|s",
+            "US dry quart|s",
+            "US dry pint|s",
+
+            "barrel|s, bbl|s, standard barrel of oil"
         ],
         [
             "m*d/t^2",
@@ -123,9 +138,13 @@
         [
             "m*d^2/t^2",
             "%joule|s, %J",
+            "erg|s",
             "kilocalorie|s, kcal, large calorie|s, food calorie|s, dietary calorie|s, kilogram calorie|s",
             "small calorie|s, cal, calorie|s, gram calorie|s, thermochemical calorie|s, thermochemical cal",
-            "british thermal unit|s, btu|s"
+            "british thermal unit|s, btu|s",
+            "barrel of oil equivalent, barrels of oil equivalent, BOE",
+            "tonne of oil equivalent, tonnes of oil equivalent, TOE",
+            "liter of oil equivalent, liters of oil equivalent, LOE"
         ],
         [
             "m * d^2 / t^3",
@@ -138,12 +157,42 @@
             "kilopascal|s, kPa, kpa",
             "psi",
             "atmosphere|s, atm|s",
-            "torr|s, mmHg, mmhg, millimeter of mercury",
+            "mmHg||, millimeters of mercury, mmhg, millimeter of mercury",
+            "torr|s",
             "bar|s",
             "millibar|s"
         ]
     ],
     "conversions": [
+        "mol = 6.02214076e23 things",
+        "1 dozen = 12 things",
+        "1 gross = 144 things",
+        "1 score = 20 things",
+
+        "imperial bushel = 4 imperial pecks",
+        "imperial peck = 2 imperial gallons",
+        "imperial gallon = 4 imperial quarts",
+        "imperial quart = 2 imperial pints",
+        "imperial pint = 4 imperial gills",
+        "imperial gill = 5 imperial ounces",
+        "imperial gallon = 160 imperial ounces",
+        "imperial oz = 28.4130625 mL",
+
+        "US bushel = 4 US pecks",
+        "US peck = 2 US dry gallons",
+        "US dry gallon = 4 US dry quarts",
+        "US dry quart = 2 US dry pints",
+        "US dry pint = 18.6 fl oz",
+
+        "1 BOE = 5.8e6 BTU",
+        "1 TOE = 41.868 gigajoules",
+        "1 LOE = 38.7 megajoules",
+
+        "1 barrel = 42 US gallons",
+        "1 league = 3 miles",
+        "1000 mil = 1 inch",
+        "1e7 erg = 1 joule",
+        "1 erg = 1 dyn * cm",
         "12 months = 1 calendar year",
         "1 beard-second = 10 nanometers",
         "1 fathom = 2 yards",
@@ -154,6 +203,7 @@
         "1 fortnight = 2 weeks",
         "1 week = 7 days",
         "760 mmHg = 1 atm",
+        "1 torr = 1 mmHg",
         "1 bar = 1000 millibars",
         "psi = lbf / in^2",
         "pascal = N/m^2",
@@ -175,7 +225,6 @@
         "rotation = 360 degrees",
         "rotation = 400 gradians",
         "1e5 dyne = 1 N",
-        "mol = 6.02214076e23 particles",
         "lb = 16 oz",
         "carat = 0.2 grams",
         "1000 kg = 1 tonne",
@@ -207,7 +256,6 @@
         "fl oz = 29.5735295625 mL",
         "gallon = 231 cubic inches",
         "fl oz = 1.8046875 cubic inches",
-        "US dry pint = 18.6 fl oz",
         "km = 1000 m",
         "foot = 12 inch",
         "yd = 3 feet",
@@ -220,12 +268,6 @@
         "4 inch = 1 hand",
         "9.4607304725808e12 km = 1 lyr",
         "9460730472580800 m = 1 lyr",
-        "imperial gallon = 4 imperial quarts",
-        "imperial quart = 2 imperial pints",
-        "imperial pint = 4 imperial gills",
-        "imperial gill = 5 imperial ounces",
-        "imperial gallon = 160 imperial ounces",
-        "imperial oz = 28.4130625 mL",
         "8 bits = 1 byte",
         "4 bits = 1 nibble",
         "2 nibbles = 1 byte",
@@ -247,8 +289,8 @@
         "YiB = 1024 ZiB"
     ],
     "aliases": [
-        "mph = miles / hour",
-        "mpg = miles / gallon",
+        "mph, miles per hour = miles / hour",
+        "mpg, miles per gallon = miles / gallon",
         "kilowatt-hour|s, kW h, kW hr|s, kWh, kW-hr|s = kilowatt * hour",
         "square inch|es, sq in, sq inch|es = in^2",
         "square foot, square feet, sq ft, sq feet, sq foot = ft^2",

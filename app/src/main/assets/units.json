@@ -292,6 +292,7 @@
         "mph, miles per hour = miles / hour",
         "mpg, miles per gallon = miles / gallon",
         "kilowatt-hour|s, kW h, kW hr|s, kWh, kW-hr|s = kilowatt * hour",
+
         "square inch|es, sq in, sq inch|es = in^2",
         "square foot, square feet, sq ft, sq feet, sq foot = ft^2",
         "square yard|s, sq yd, sq yard|s = yd^2",
@@ -299,12 +300,13 @@
         "square meter|s, sq m, sq meter|s = m^2",
         "square kilometer|s, sq km, sq kilometer|s = km^2",
         "square centimeter|s, sq cm, sq centimeter|s = cm^2",
-        "cubic centimeter|s, cubic cm = cc",
-        "cubic inch|es, cubic in = in^3",
-        "cubic foot, cubic feet, cubic ft = ft^3",
-        "cubic yard|s, cubic yd = yd^3",
-        "cubic mile|s, cubic mi = mi^3",
-        "cubic meter|s, cubic m = m^3",
-        "cubic kilometer|s, cubic km = km^3"
+
+        "cubic centimeter|s, cubic cm, cu cm = cc",
+        "cubic inch|es, cubic in, cu in = in^3",
+        "cubic foot, cubic feet, cubic ft, cu ft = ft^3",
+        "cubic yard|s, cubic yd, cu yd = yd^3",
+        "cubic mile|s, cubic mi, cu mi = mi^3",
+        "cubic meter|s, cubic m, cu m = m^3",
+        "cubic kilometer|s, cubic km, cu km = km^3"
     ]
 }

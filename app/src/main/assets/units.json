@@ -119,7 +119,7 @@
             "imperial quart|s",
             "imperial pint|s",
             "imperial gill|s",
-            "imperial fluid ounce|s, imperial ounce|s, imperial oz; imperial fl oz",
+            "imperial fluid ounce|s, imperial ounce|s, imperial oz, imperial fl oz",
 
             "bushel|s, US bushel|s",
             "peck|s, US peck|s",
@@ -141,7 +141,7 @@
             "erg|s",
             "kilocalorie|s, large calorie|s, food calorie|s, dietary calorie|s, kilogram calorie|s; kcal",
             "small calorie|s, calorie|s, gram calorie|s, thermochemical calorie|s, thermochemical cal; cal",
-            "british thermal unit|s; BTU|s",
+            "british thermal unit|s; BTU",
             "barrel of oil equivalent; BOE; barrels of oil equivalent",
             "tonne of oil equivalent; TOE; tonnes of oil equivalent",
             "liter of oil equivalent; LOE; liters of oil equivalent"
@@ -157,7 +157,7 @@
             "kilopascal|s; kPa, kpa",
             "psi",
             "atmosphere|s; atm|s",
-            "mmHg, millimeter of mercury; mmHg, mmhg; millimeters of mercury",
+            "mmHg, mm mercury, millimeter|s Hg, millimeter|s of mercury; mmHg; mm mercury",
             "torr|s",
             "bar|s",
             "millibar|s"

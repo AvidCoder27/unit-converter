@@ -38,25 +38,6 @@ fun String.intoQuantity(): Quantity {
     }
 }
 
-fun <K, V> HashMap<K, V>.distinctValues(): Map<K, V> {
-    val seenValues = mutableSetOf<V>()
-    val distinctMap = mutableMapOf<K, V>()
-
-    for ((key, value) in this) {
-        if (seenValues.add(value)) {
-            distinctMap[key] = value
-        }
-    }
-
-    return distinctMap
-}
-
-fun <T> MutableCollection<Pair<T, String?>>.addPair(first: T, second: String?) = add(
-    Pair(
-        first, second
-    )
-)
-
 fun String.lowercaseGreaterThan3() = if (this.length > 2) this.lowercase() else this
 
 fun <T> Map<T, Int>.clean() = this.filterValues { it != 0 }

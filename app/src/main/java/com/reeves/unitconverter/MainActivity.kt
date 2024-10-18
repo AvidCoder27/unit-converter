@@ -2,10 +2,8 @@ package com.reeves.unitconverter
 
 import android.os.Bundle
 import android.util.Log
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ListView
 import android.widget.MultiAutoCompleteTextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +15,7 @@ private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
-    private fun <T> MultiAutoCompleteTextView.setup(adapter: ArrayAdapter<T>): MultiAutoCompleteTextView {
+    private fun MultiAutoCompleteTextView.setup(adapter: DescribedUnitAdapter): MultiAutoCompleteTextView {
         setAdapter(adapter)
         setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         return this
@@ -35,9 +33,7 @@ class MainActivity : AppCompatActivity() {
 
         UnitStore.loadFromJson(this)
 
-        val adapter = DescribedUnitAdapter(
-            this, R.layout.list_item, UnitStore.getSuggestedNames()
-        )
+        val adapter = DescribedUnitAdapter(this, UnitStore.getDescriptions())
 
         val outputMathView = findViewById<MathView>(R.id.output_value)
         val stepsMathView = findViewById<MathView>(R.id.conversion_steps)

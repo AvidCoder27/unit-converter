@@ -18,10 +18,10 @@
         android:padding="16dp"
         android:singleLine="true"
         android:textAppearance="?android:attr/textAppearanceLargePopupMenu"
-        android:textSize="18sp"
+        android:textSize="17sp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="name" />
+        tools:text="MMMMMMMM" />
 
     <TextView
         android:id="@+id/description_tv"
@@ -34,9 +34,10 @@
         android:padding="16dp"
         android:singleLine="true"
         android:textAppearance="?android:attr/textAppearanceLargePopupMenu"
-        android:textSize="16sp"
+        android:textSize="17sp"
+        android:alpha="0.9"
         app:layout_constraintBottom_toBottomOf="@id/name_tv"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/name_tv"
-        tools:text="(description)" />
+        tools:text="(MMMMMMMMMMMMMMMM)" />
 </androidx.constraintlayout.widget.ConstraintLayout>

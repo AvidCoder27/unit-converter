@@ -9,7 +9,7 @@ private const val PERCENT = "%"
 
 object UnitStore {
     private val unitNames: HashMap<String, SimpleUnit> = HashMap()
-    private val aliases: HashMap<String, Quantity> = HashMap()
+    private val aliases: HashMap<String, SimpleUnit> = HashMap()
     private val units: MutableList<SimpleUnit> = mutableListOf()
     private val conversions: MutableList<Conversion> = mutableListOf()
 
@@ -40,27 +40,27 @@ object UnitStore {
         alpha: SimpleUnit?,
         beta: SimpleUnit?,
     ) {
-        alpha?.addConversion(conversion)
-        beta?.addConversion(conversion)
+        alpha?.addSimpleConversion(conversion)
+        beta?.addSimpleConversion(conversion)
         conversions.add(conversion)
         conversion.denominator.forEach {
-            it.key.addConnection(conversion)
+            it.key.addComplexConversion(conversion)
         }
         conversion.numerator.forEach {
-            it.key.addConnection(conversion)
+            it.key.addComplexConversion(conversion)
         }
     }
 
     private fun loadAliases(jsonObject: JSONObject) =
         jsonObject.getJSONArray("aliases").let { array ->
+            val l = mutableListOf<SimpleUnit>()
             for (i in 0 until array.length()) {
                 val aliasString = array.getString(i)
                 val equalParts = splitConversionByEquals(aliasString)
                 val quantity = equalParts[1].intoQuantity()
                 val names = equalParts[0].extractNames()
-                for (name in names.first + names.second + names.third) {
-                    aliases[name.lowercaseGreaterThan3()] = quantity
-                }
+                val unit = createUnit(names.first, names.second, listOf(), quantity.dimensionality(), aliases, l)
+                unit.addComplexConversion(Conversion(quantity, Quantity(1.0, mapOf(unit to 1))))
             }
         }
 
@@ -76,7 +76,7 @@ object UnitStore {
                     createPrefixedUnit(line, dimensionality)
                 } else {
                     val names = line.extractNames()
-                    createUnit(names.first, names.second, names.third, dimensionality)
+                    createUnit(names.first, names.second, names.third, dimensionality, unitNames, units)
                 }
             }
         }
@@ -111,7 +111,9 @@ object UnitStore {
             singulars.cleanPrefix(),
             plurals.cleanPrefix(),
             abbreviations.cleanPrefix(),
-            dimensionality
+            dimensionality,
+            unitNames,
+            units
         )
         val baseQuantity = Quantity(1.0, mapOf(baseUnit to 1))
         Prefix.PREFIXES.forEach { prefix ->
@@ -125,11 +127,11 @@ object UnitStore {
                 it.replace(PERCENT, prefix.label)
             }.toMutableList()
 
-            if (prefix.prefix == "micro") {
-                abbreviations.forEach {
-                    prefixedAbbreviations.add(it.replace(PERCENT, "u"))
-                }
-            }
+//            if (prefix.prefix == "micro") {
+//                abbreviations.forEach {
+//                    prefixedAbbreviations.add(it.replace(PERCENT, "u"))
+//                }
+//            }
 
             val prefixedUnit = createUnitChecking(
                 prefixedSingulars, prefixedPlurals, prefixedAbbreviations, dimensionality
@@ -158,10 +160,10 @@ object UnitStore {
                     undefinedNames.add(name)
                 }
             }
-            assignNames(undefinedNames, predefinedUnit!!)
+            assignNames(undefinedNames, predefinedUnit!!, unitNames)
             return predefinedUnit
         }
-        return createUnit(singulars, plurals, abbreviations, dimensionality)
+        return createUnit(singulars, plurals, abbreviations, dimensionality, unitNames, units)
     }
 
     private fun createUnit(
@@ -169,16 +171,18 @@ object UnitStore {
         plurals: List<String>,
         abbreviations: List<String>,
         dimensionality: Map<DIMENSION, Int>,
+        map: HashMap<String,SimpleUnit>,
+        list: MutableList<SimpleUnit>,
     ): SimpleUnit {
         val unit = SimpleUnit(singulars, plurals, abbreviations, dimensionality)
-        assignNames(singulars + plurals + abbreviations, unit)
-        units.add(unit)
+        assignNames(singulars + plurals + abbreviations, unit, map)
+        list.add(unit)
         return unit
     }
 
-    private fun assignNames(names: List<String>, unit: SimpleUnit) {
+    private fun assignNames(names: List<String>, unit: SimpleUnit, map: HashMap<String, SimpleUnit>) {
         names.forEach {
-            unitNames[it.lowercaseGreaterThan3()] = unit
+            map[it.lowercaseGreaterThan3()] = unit
         }
     }
 
@@ -235,7 +239,7 @@ object UnitStore {
                     queue.addLast(neighbor)
                 }
             }
-            for (conversion in node.getConnections()) {
+            for (conversion in node.getComplexConversions()) {
                 val lonelies = conversion.getLonelies().toList().filterNotNull()
                 if (lonelies.size == 1) {
                     val lonely = lonelies.first()
@@ -283,7 +287,7 @@ object UnitStore {
                 triple.getOrNull(2)?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
                     ?.toMutableList() ?: mutableListOf()
 
-            Triple(singulars.map { singular ->
+            return Triple(singulars.map { singular ->
                 val split = singular.split('|')
                 assert(split.size <= 2) { "Invalid name: $singular" }
                 if (split.size == 2) {
@@ -312,23 +316,17 @@ object UnitStore {
     fun getUnit(name: String): Map<SimpleUnit, Int> {
         val casedName = name.lowercaseGreaterThan3()
         unitNames[casedName]?.let { return mapOf(it to 1) }
-        aliases[casedName]?.let { return it.units }
+        aliases[casedName]?.let { return it.getComplexConversions().first().getOther(it).units }
         unitNames.forEach { (key, value) ->
             Log.e("UnitStore", "key: $key, value: $value")
         }
         throw UndefinedUnitException(casedName)
     }
 
-    fun getSuggestedNames(): List<Pair<String, String>> =
-        mutableListOf<Pair<String, String>>().also { list ->
-            unitNames.values.distinct().forEach {
-                list.add(Pair(it.plural(), ""))
-                if (it.plural() != it.abbreviation()) {
-                    list.add(it.abbreviation(), it.plural())
-                }
-            }
-            aliases.distinctValues().forEach {
-                list.add(it.key, it.value.toString())
+    fun getSuggestedNames(): List<Pair<String, String?>> =
+        mutableListOf<Pair<String, String?>>().also { list ->
+            (unitNames + aliases).values.distinct().forEach {
+                it.addAllSuggestedNames(list)
             }
         }.sortedWith { str1, str2 ->
             val len1 = str1.first.length

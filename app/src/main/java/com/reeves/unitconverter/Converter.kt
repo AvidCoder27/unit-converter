@@ -115,7 +115,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         val (chosen, exponent, leastComplex) = x.first()
         repeat(exponent.absoluteValue) {
             path.add(
-                chosen.getConnectionTo(leastComplex!!)
+                chosen.getConversionToQuantity(leastComplex!!)
                     .flippedToConvertInto(chosen, goingDown xor (exponent.sign < 0))
             )
         }
@@ -126,7 +126,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         if (unit.complexity == 0) return null
         var lowestComplexity = unit.complexity
         val leastComplex: MutableList<Quantity> = mutableListOf()
-        for (conversion in unit.getConversions()) {
+        for (conversion in unit.getSimpleConversions()) {
             val quantity = conversion.getOther(unit)
             if (quantity.complexity() < lowestComplexity) {
                 leastComplex.clear()
@@ -144,7 +144,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         path: List<SimpleUnit>, answer: RunningAnswer, invert: Boolean,
     ): List<Conversion> = mutableListOf<Conversion>().also { list ->
         for (index in 1 until path.size) {
-            val conversion = path[index - 1].getConversionTo(path[index])
+            val conversion = path[index - 1].getConversionToUnit(path[index])
             conversion.flippedToConvertInto(path[index], invert).let {
                 list.add(it)
                 it.apply(answer)

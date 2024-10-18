@@ -5,13 +5,13 @@
             "micrometer|s, micron|s; μm",
             "%meter|s, %metre|s; %m",
             "inch|es; in",
-            "foot; feet; ft",
+            "foot; ft; feet",
             "yard|s, yrd|s; yd|s",
             "furlong|s",
             "mile|s; mi",
             "nautical mile|s; nmi",
             "hand|s",
-            "light-year|s, light year|s, lightyear|s; lyr|s, ly",
+            "light-year|s, lightyear|s; lyr|s, ly",
             "fathom|s",
             "angstrom|s; Å",
             "beard-second|s",
@@ -52,7 +52,7 @@
         ],
         [
             "I",
-            "%ampere|s; %A; %amp|s"
+            "%ampere|s, %amp|s; %A"
         ],
         [
             "n",
@@ -103,7 +103,7 @@
         [
             "d*d*d",
             "milliliter|s; mL, cc, ml",
-            "%liter|s; %L; %litre|s",
+            "%liter|s, %litre|s; %L",
             "metric tablespoon|s",
             "fluid ounce|s; fl oz, fl. oz.",
             "tablespoon|s; tbsp",
@@ -301,7 +301,7 @@
         "square kilometer|s, sq km, sq kilometer|s = km^2",
         "square centimeter|s, sq cm, sq centimeter|s = cm^2",
 
-        "cubic centimeter|s, cubic cm, cu cm = cc",
+        "cubic centimeter|s, cubic cm, cu cm = cm^3",
         "cubic inch|es, cubic in, cu in = in^3",
         "cubic foot, cubic feet, cubic ft, cu ft = ft^3",
         "cubic yard|s, cubic yd, cu yd = yd^3",

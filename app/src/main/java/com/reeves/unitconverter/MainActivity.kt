@@ -35,7 +35,16 @@ class MainActivity : AppCompatActivity() {
         UnitStore.loadFromJson(this)
 
         val adapter = ArrayAdapter(
-            this, R.layout.list_item, UnitStore.getSuggestedNames().map { it.first }
+            this, R.layout.list_item, UnitStore.getSuggestedNames().map {
+                buildString {
+                    append(it.first)
+                    if (it.second != null) {
+                        append(" (")
+                        append(it.second)
+                        append(")")
+                    }
+                }
+            }
         )
         val outputMathView = findViewById<MathView>(R.id.output_value)
         val stepsMathView = findViewById<MathView>(R.id.conversion_steps)

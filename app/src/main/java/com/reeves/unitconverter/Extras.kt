@@ -51,9 +51,9 @@ fun <K, V> HashMap<K, V>.distinctValues(): Map<K, V> {
     return distinctMap
 }
 
-fun <T> MutableCollection<Pair<T, String>>.add(first: T, second: String) = add(
+fun <T> MutableCollection<Pair<T, String?>>.addPair(first: T, second: String?) = add(
     Pair(
-        first, "($second)"
+        first, second
     )
 )
 

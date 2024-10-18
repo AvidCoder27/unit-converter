@@ -7,27 +7,27 @@ data class SimpleUnit(
     val dimensionality: Map<DIMENSION, Int>,
 ) {
     var complexity: Int = Int.MAX_VALUE
-    private val conversions: MutableSet<Conversion> = mutableSetOf()
-    private val connections: MutableSet<Conversion> = mutableSetOf()
+    private val simpleConversions: MutableSet<Conversion> = mutableSetOf()
+    private val complexConversions: MutableSet<Conversion> = mutableSetOf()
 
     init {
         assert(singulars.isNotEmpty()) { "Cannot create unit with empty Singulars" }
     }
 
-    fun addConversion(conversion: Conversion) = conversions.add(conversion)
+    fun addSimpleConversion(conversion: Conversion) = simpleConversions.add(conversion)
 
-    fun addConnection(connection: Conversion) = connections.add(connection)
+    fun addComplexConversion(connection: Conversion) = complexConversions.add(connection)
 
-    fun getConversions(): List<Conversion> = conversions.toList()
+    fun getSimpleConversions(): List<Conversion> = simpleConversions.toList()
 
-    fun getConnections(): List<Conversion> = connections.toList()
+    fun getComplexConversions(): List<Conversion> = complexConversions.toList()
 
     fun getOneToOneConversions(): List<SimpleUnit> =
-        conversions.toList().map { it.getOther(this) }.filter { it.units.size == 1 }
+        simpleConversions.toList().map { it.getOther(this) }.filter { it.units.size == 1 }
             .map { it.units.keys.first() }
 
-    fun getConversionTo(other: SimpleUnit): Conversion {
-        conversions.forEach {
+    fun getConversionToUnit(other: SimpleUnit): Conversion {
+        simpleConversions.forEach {
             if (it.numerator.units.size == 1 && it.numerator.units.containsKey(other)) {
                 return it
             }
@@ -38,8 +38,8 @@ data class SimpleUnit(
         throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")
     }
 
-    fun getConnectionTo(other: Quantity): Conversion {
-        connections.forEach {
+    fun getConversionToQuantity(other: Quantity): Conversion {
+        complexConversions.forEach {
             if (it.numerator == other) {
                 return it
             }
@@ -48,6 +48,18 @@ data class SimpleUnit(
             }
         }
         throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")
+    }
+
+    fun addAllSuggestedNames(list: MutableList<Pair<String, String?>>) {
+        singulars.forEach {
+            list.addPair(it, null)
+        }
+        plurals.forEach {
+            list.addPair(it, null)
+        }
+        abbreviations.forEach {
+            list.addPair(it, plural())
+        }
     }
 
     fun singular(): String = singulars[0]

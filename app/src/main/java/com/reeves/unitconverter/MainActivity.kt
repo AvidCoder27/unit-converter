@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ListView
 import android.widget.MultiAutoCompleteTextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -34,18 +35,10 @@ class MainActivity : AppCompatActivity() {
 
         UnitStore.loadFromJson(this)
 
-        val adapter = ArrayAdapter(
-            this, R.layout.list_item, UnitStore.getSuggestedNames().map {
-                buildString {
-                    append(it.first)
-                    if (it.second != null) {
-                        append(" (")
-                        append(it.second)
-                        append(")")
-                    }
-                }
-            }
+        val adapter = DescribedUnitAdapter(
+            this, R.layout.list_item, UnitStore.getSuggestedNames()
         )
+
         val outputMathView = findViewById<MathView>(R.id.output_value)
         val stepsMathView = findViewById<MathView>(R.id.conversion_steps)
 

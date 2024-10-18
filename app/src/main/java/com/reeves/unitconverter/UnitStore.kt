@@ -323,14 +323,14 @@ object UnitStore {
         throw UndefinedUnitException(casedName)
     }
 
-    fun getSuggestedNames(): List<Pair<String, String?>> =
-        mutableListOf<Pair<String, String?>>().also { list ->
+    fun getSuggestedNames(): List<DescribedUnit> =
+        mutableListOf<DescribedUnit>().also { list ->
             (unitNames + aliases).values.distinct().forEach {
                 it.addAllSuggestedNames(list)
             }
-        }.sortedWith { str1, str2 ->
-            val len1 = str1.first.length
-            val len2 = str2.first.length
+        }.sortedWith { name1, name2 ->
+            val len1 = name1.name.length
+            val len2 = name2.name.length
             // Prioritize length comparison first
             if (len1 != len2) {
                 return@sortedWith len1.compareTo(len2)
@@ -339,8 +339,8 @@ object UnitStore {
             // If lengths are equal, compare characters
             val lim = minOf(len1, len2)
             for (k in 0 until lim) {
-                val c1 = str1.first[k]
-                val c2 = str2.first[k]
+                val c1 = name1.name[k]
+                val c2 = name2.name[k]
                 if (c1 != c2) {
                     val order1 = when (c1) {
                         in 'a'..'z' -> 0

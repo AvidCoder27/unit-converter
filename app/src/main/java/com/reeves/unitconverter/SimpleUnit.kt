@@ -50,15 +50,12 @@ data class SimpleUnit(
         throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")
     }
 
-    fun addAllSuggestedNames(list: MutableList<Pair<String, String?>>) {
-        singulars.forEach {
-            list.addPair(it, null)
-        }
-        plurals.forEach {
-            list.addPair(it, null)
+    fun addAllSuggestedNames(list: MutableList<DescribedUnit>) {
+        (plurals + singulars).forEach {
+            list.add(DescribedUnit(it, null))
         }
         abbreviations.forEach {
-            list.addPair(it, plural())
+            list.add(DescribedUnit(it, plural()))
         }
     }
 

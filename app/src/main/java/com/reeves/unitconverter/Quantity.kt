@@ -25,7 +25,8 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
 
     fun divide(unit: SimpleUnit) = divide(Quantity(1.0, mapOf(unit to 1)))
 
-    fun pow(exponent: Int) = Quantity(value.pow(exponent), units.mapValues { (_, power) -> power * exponent })
+    fun pow(exponent: Int) =
+        Quantity(value.pow(exponent), units.mapValues { (_, power) -> power * exponent })
 
     fun inverse() = Quantity(1.0 / value, units.mapValues { -it.value })
 
@@ -43,6 +44,12 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         if (positives && count > 0) List(count) { unit }
         else if (!positives && count < 0) List(-count) { unit }
         else listOf()
+    }
+
+    fun formatToString(formatter: ScientificFormatter = ScientificFormatter()) = buildString {
+        append(formatter.format(value))
+        append(" ")
+        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString(" × "))
     }
 
     override fun iterator(): Iterator<Map.Entry<SimpleUnit, Int>> = units.iterator()

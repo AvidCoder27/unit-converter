@@ -7,6 +7,11 @@ import kotlin.math.sign
 private const val TAG = "Converter"
 
 class Converter(private val outputValue: MathView, private val conversionSteps: MathView) {
+
+    private var finalValue: Quantity? = null
+
+    fun getFinalValue() = finalValue
+
     fun convert(
         inputValueString: String,
         startingNumeratorString: String,
@@ -14,8 +19,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         endingNumeratorString: String,
         endingDenominatorString: String,
     ) {
-        conversionSteps.setDisplayText("")
-        outputValue.setDisplayText("")
+        finalValue = null
         val unvalidatedLeft =
             startingNumeratorString.intoQuantity().divide(startingDenominatorString.intoQuantity())
                 .removeValue().clean()
@@ -173,6 +177,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
     private fun displayOutput(
         steps: Map<Conversion, Int>, left: Quantity, right: Quantity, flip: Boolean,
     ) {
+        finalValue = right
         outputValue.setDisplayText(KatexStringBuilder().let {
             it.appendValueAndUnits(right)
             it.toString()

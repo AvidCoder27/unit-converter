@@ -1,6 +1,9 @@
 package com.reeves.unitconverter
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.view.MotionEvent
 import android.widget.EditText
 
@@ -13,7 +16,8 @@ class InvalidUnitsException(culprit: String) :
 
 class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit.")
 class ImpossibleConversionException : Exception("This conversion is impossible!")
-class RequiresFlippingException : Exception("This conversion is impossible until one side is flipped.")
+class RequiresFlippingException :
+    Exception("This conversion is impossible until one side is flipped.")
 
 class MeaninglessConversionException(cause: String) :
     Exception("This conversion is meaningless because $cause")
@@ -96,4 +100,11 @@ fun EditText.onDrawableEndClick(action: (EditText) -> Unit) {
         }
         return@setOnTouchListener false
     }
+}
+
+fun Context.copyToClipboard(text: String?) {
+    if (text == null) return
+    val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clipData = ClipData.newPlainText("text", text)
+    clipboardManager.setPrimaryClip(clipData)
 }

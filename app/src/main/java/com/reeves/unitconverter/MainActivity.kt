@@ -2,12 +2,13 @@ package com.reeves.unitconverter
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.MultiAutoCompleteTextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
@@ -51,6 +52,7 @@ class MainActivity : AppCompatActivity() {
 
         val outputMathView = findViewById<MathView>(R.id.output_value)
         val stepsMathView = findViewById<MathView>(R.id.conversion_steps)
+        val copyOutputButton = findViewById<ImageButton>(R.id.copy_output_button)
 
         val inputValueField = findViewById<EditText>(R.id.input_value)
         val startingNumerator =
@@ -70,9 +72,16 @@ class MainActivity : AppCompatActivity() {
             endingDenominator
         )
 
+        val clearOutput = {
+            outputMathView.setDisplayText("")
+            stepsMathView.setDisplayText("")
+            copyOutputButton.visibility = View.INVISIBLE
+        }
+
         val converter = Converter(outputMathView, stepsMathView)
         var snackBar: Snackbar? = null
         val convert = {
+            clearOutput()
             allFields.forEach { it.clearFocus() }
             @Suppress("DEPRECATION") ViewCompat.getWindowInsetsController(window.decorView)
                 ?.hide(WindowInsetsCompat.Type.ime())
@@ -87,10 +96,13 @@ class MainActivity : AppCompatActivity() {
                     endingNumerator.text.toString(),
                     endingDenominator.text.toString(),
                 )
+                copyOutputButton.visibility = View.VISIBLE
             } catch (e: Exception) {
                 when (e) {
                     is InvalidUnitsException, is UndefinedUnitException, is ImpossibleConversionException, is MeaninglessConversionException, is RequiresFlippingException -> {
-                        snackBar = Snackbar.make(window.decorView, "ERROR: ${e.message}", Snackbar.LENGTH_INDEFINITE)
+                        snackBar = Snackbar.make(
+                            window.decorView, "ERROR: ${e.message}", Snackbar.LENGTH_INDEFINITE
+                        )
                         val bar = snackBar!!
                         if (e is RequiresFlippingException) {
                             bar.setAction("Flip End Units") {
@@ -122,15 +134,14 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.clear_all).setOnClickListener {
             allFields.forEach { it.fullClear() }
-            outputMathView.setDisplayText("")
-            stepsMathView.setDisplayText("")
+            clearOutput()
         }
 
-        findViewById<AppCompatImageButton>(R.id.help_button).setOnClickListener {
+        findViewById<ImageButton>(R.id.help_button).setOnClickListener {
             allFields.forEach { it.clearFocus() }
         }
 
-        findViewById<AppCompatImageButton>(R.id.switch_start_end_button).setOnClickListener {
+        findViewById<ImageButton>(R.id.switch_start_end_button).setOnClickListener {
             switchText(startingNumerator, endingNumerator)
             switchText(startingDenominator, endingDenominator)
         }
@@ -145,6 +156,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.convert_button).setOnClickListener {
             convert()
+        }
+
+        copyOutputButton.setOnClickListener {
+            copyToClipboard(converter.getFinalValue()?.formatToString())
         }
     }
 }

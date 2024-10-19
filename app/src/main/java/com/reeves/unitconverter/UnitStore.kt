@@ -124,18 +124,18 @@ object UnitStore {
                 it.replace(PERCENT, prefix.label)
             }.toMutableList()
 
-//            if (prefix.prefix == "micro") {
-//                abbreviations.forEach {
-//                    prefixedAbbreviations.add(it.replace(PERCENT, "u"))
-//                }
-//            }
-
             val prefixedUnit = createUnitChecking(
                 prefixedSingulars, prefixedPlurals, prefixedAbbreviations, dimensionality
             )
-            val conversion = Conversion(
-                baseQuantity, Quantity(10.0.pow(-prefix.power), mapOf(prefixedUnit to 1))
-            )
+            val conversion = if (prefix.power < 0) {
+                Conversion(
+                    baseQuantity, Quantity(10.0.pow(-prefix.power), mapOf(prefixedUnit to 1))
+                )
+            } else {
+                Conversion(
+                    baseQuantity.multiply(10.0.pow(prefix.power)), Quantity(1.0, mapOf(prefixedUnit to 1))
+                )
+            }
             addConversion(conversion, baseUnit, prefixedUnit)
         }
     }

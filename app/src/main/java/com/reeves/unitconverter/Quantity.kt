@@ -21,6 +21,8 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         }
     }).clean()
 
+    fun multiply(value: Double) = Quantity(this.value * value, units)
+
     fun divide(other: Quantity) = multiply(other.inverse())
 
     fun divide(unit: SimpleUnit) = divide(Quantity(1.0, mapOf(unit to 1)))

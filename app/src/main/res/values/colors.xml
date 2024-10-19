@@ -14,4 +14,5 @@
     <color name="_magenta">#E600FF</color>
     <color name="_transparent">#00000000</color>
     <color name="list_item_background">@color/_biloba_flower</color>
+    <color name="_red_button_red">#B80922</color>
 </resources>

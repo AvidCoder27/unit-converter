@@ -60,7 +60,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         }
 
         if (steps.isEmpty()) {
-            throw MeaninglessConversionException("the input and output units probably cancel out or are the same")
+            throw MeaninglessConversionException("the input and output units either cancel out or are the same")
         }
 
         displayOutput(
@@ -162,8 +162,10 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         if (leftDimensionality.isEmpty() || rightDimensionality.isEmpty()) {
             throw MeaninglessConversionException("all the units cancel out on both sides")
         }
+        if (leftDimensionality == rightDimensionality.mapValues { -it.value }) {
+            throw ImpossibleConversionException("Try flipping the starting or ending units")
+        }
         if (leftDimensionality == rightDimensionality) return false
-        if (leftDimensionality == rightDimensionality.mapValues { -it.value }) return true
         throw ImpossibleConversionException()
     }
 

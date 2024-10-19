@@ -12,7 +12,7 @@ class InvalidUnitsException(culprit: String) :
     Exception("`$culprit` is not a valid sequence of units")
 
 class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit")
-class ImpossibleConversionException : Exception("This conversion is impossible!")
+class ImpossibleConversionException(suggestion: String = "") : Exception("This conversion is impossible! $suggestion")
 
 class MeaninglessConversionException(cause: String) :
     Exception("This conversion is meaningless because $cause")
@@ -96,13 +96,4 @@ fun EditText.onDrawableEndClick(action: (EditText) -> Unit) {
         }
         return@setOnTouchListener false
     }
-}
-
-fun EditText.clearTextOnDrawableEndClick() {
-    onDrawableEndClick { it.fullClear() }
-}
-
-fun EditText.fullClear() {
-    text.clear()
-    clearFocus()
 }

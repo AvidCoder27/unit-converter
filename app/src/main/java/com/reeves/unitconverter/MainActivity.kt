@@ -71,11 +71,15 @@ class MainActivity : AppCompatActivity() {
         )
 
         val converter = Converter(outputMathView, stepsMathView)
+        var snackBar: Snackbar? = null
         val convert = {
             allFields.forEach { it.clearFocus() }
             @Suppress("DEPRECATION") ViewCompat.getWindowInsetsController(window.decorView)
                 ?.hide(WindowInsetsCompat.Type.ime())
             try {
+                if (snackBar != null) {
+                    snackBar!!.dismiss()
+                }
                 converter.convert(
                     inputValueField.text.toString(),
                     startingNumerator.text.toString(),
@@ -85,9 +89,20 @@ class MainActivity : AppCompatActivity() {
                 )
             } catch (e: Exception) {
                 when (e) {
-                    is InvalidUnitsException, is UndefinedUnitException, is ImpossibleConversionException, is MeaninglessConversionException, is PromotionRequiredException -> {
-                        Snackbar.make(window.decorView, "Error: ${e.message}", Snackbar.LENGTH_LONG)
-                            .show()
+                    is InvalidUnitsException, is UndefinedUnitException, is ImpossibleConversionException, is MeaninglessConversionException, is RequiresFlippingException -> {
+                        snackBar = Snackbar.make(window.decorView, "ERROR: ${e.message}", Snackbar.LENGTH_INDEFINITE)
+                        val bar = snackBar!!
+                        if (e is RequiresFlippingException) {
+                            bar.setAction("Flip End Units") {
+                                switchText(endingNumerator, endingDenominator)
+                                bar.dismiss()
+                            }
+                        } else {
+                            bar.setAction("Dismiss") {
+                                bar.dismiss()
+                            }
+                        }
+                        bar.show()
                         Log.e(TAG, "attemptConversion: $e")
                     }
 
@@ -98,9 +113,6 @@ class MainActivity : AppCompatActivity() {
 
         allFields.forEach { field ->
             field.onDrawableEndClick { it.fullClear() }
-        }
-
-        allFields.forEach { field ->
             field.setOnFocusChangeListener { view, hasFocus ->
                 if (hasFocus && view is MultiAutoCompleteTextView) {
                     view.showDropDown()
@@ -112,6 +124,10 @@ class MainActivity : AppCompatActivity() {
             allFields.forEach { it.fullClear() }
             outputMathView.setDisplayText("")
             stepsMathView.setDisplayText("")
+        }
+
+        findViewById<AppCompatImageButton>(R.id.help_button).setOnClickListener {
+            allFields.forEach { it.clearFocus() }
         }
 
         findViewById<AppCompatImageButton>(R.id.switch_start_end_button).setOnClickListener {

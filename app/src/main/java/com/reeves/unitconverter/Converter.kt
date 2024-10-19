@@ -157,13 +157,14 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         val rightDimensionality = right.dimensionality().clean()
         Log.d(TAG, "validateConversion: left: $leftDimensionality, right: $rightDimensionality")
         if (left === right) {
-            throw MeaninglessConversionException("the input and output units are the same")
+            throw MeaninglessConversionException("the input and output are the same!")
         }
         if (leftDimensionality.isEmpty() || rightDimensionality.isEmpty()) {
-            throw MeaninglessConversionException("all the units cancel out on both sides")
+            throw MeaninglessConversionException("all the units cancel out!")
         }
         if (leftDimensionality == rightDimensionality.mapValues { -it.value }) {
-            throw ImpossibleConversionException("Try flipping the starting or ending units")
+            return true
+            //throw RequiresFlippingException()
         }
         if (leftDimensionality == rightDimensionality) return false
         throw ImpossibleConversionException()

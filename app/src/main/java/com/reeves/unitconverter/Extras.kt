@@ -11,14 +11,14 @@ data class RunningAnswer(var value: Double) {
 class InvalidUnitsException(culprit: String) :
     Exception("`$culprit` is not a valid sequence of units")
 
-class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit")
-class ImpossibleConversionException(suggestion: String = "") : Exception("This conversion is impossible! $suggestion")
+class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit.")
+class ImpossibleConversionException : Exception("This conversion is impossible!")
+class RequiresFlippingException : Exception("This conversion is impossible until one side is flipped.")
 
 class MeaninglessConversionException(cause: String) :
     Exception("This conversion is meaningless because $cause")
 
-class PromotionRequiredException :
-    Exception("This conversion cannot be completed until promoted to a more rigorous method")
+class PromotionRequiredException : Exception()
 
 /**
  * @throws UndefinedUnitException

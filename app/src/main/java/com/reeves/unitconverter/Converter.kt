@@ -5,8 +5,14 @@ import kotlin.math.absoluteValue
 import kotlin.math.sign
 
 private const val TAG = "Converter"
+private const val ADD_TO_CELSIUS = 273.15
+private const val ADD_TO_FAHRENHEIT = 459.67
 
 class Converter(private val outputValue: MathView, private val conversionSteps: MathView) {
+    private val fahrenheit = UnitStore.getUnit("fahrenheit").keys.first()
+    private val celsius = UnitStore.getUnit("celsius").keys.first()
+    private val kelvin = UnitStore.getUnit("kelvin").keys.first()
+    private val rankine = UnitStore.getUnit("rankine").keys.first()
 
     private var finalValue: Quantity? = null
 
@@ -41,12 +47,26 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         }
 
         val runningAnswer = RunningAnswer(inputValue)
+        var doingSimpleTempConversion = false
         val steps = mutableListOf<Conversion>().runCatching {
-            for (path in findPathsBetween(left, right, true)) {
+            if (left.dimensionality() == mapOf(DIMENSION.TEMPERATURE to 1) && left.units.size == 1 && right.units.size == 1) {
+                Log.d(TAG, "convert: simple temp conversion")
+                val path = findPathsBetween(left, right, true).let {
+                    if (it.size != 1) {
+                        // we expect exactly one path for simple temperature conversion
+                        throw PromotionRequiredException()
+                    }
+                    it.first()
+                }
                 addAll(traversePath(path, runningAnswer, false))
-            }
-            for (path in findPathsBetween(left, right, false)) {
-                addAll(traversePath(path, runningAnswer, true))
+                doingSimpleTempConversion = true
+            } else {
+                for (path in findPathsBetween(left, right, true)) {
+                    addAll(traversePath(path, runningAnswer, false))
+                }
+                for (path in findPathsBetween(left, right, false)) {
+                    addAll(traversePath(path, runningAnswer, true))
+                }
             }
             this
         }.getOrElse { failure ->
@@ -67,12 +87,16 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
             throw MeaninglessConversionException("the input and output units either cancel out or are the same")
         }
 
-        displayOutput(
-            dedupAndCancelOut(steps),
-            left.withValue(inputValue),
-            right.withValue(runningAnswer.value),
-            flip
-        )
+        if (doingSimpleTempConversion) {
+            displayWeirdOutput(steps, left.withValue(inputValue), right)
+        } else {
+            displayOutput(
+                dedupAndCancelOut(steps),
+                left.withValue(inputValue),
+                right.withValue(runningAnswer.value),
+                flip
+            )
+        }
     }
 
     private fun dedupAndCancelOut(conversions: List<Conversion>): Map<Conversion, Int> {
@@ -172,6 +196,61 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         }
         if (leftDimensionality == rightDimensionality) return false
         throw ImpossibleConversionException()
+    }
+
+    private fun displayWeirdOutput(
+        steps: MutableList<Conversion>,
+        left: Quantity,
+        right: Quantity,
+    ) {
+        val runningAnswer = RunningAnswer(left.value)
+        val katexSteps = KatexStringBuilder()
+        var putAnswerAgainAtEnd = true
+        for ((index, step) in steps.withIndex()) {
+            putAnswerAgainAtEnd = true
+            val (numerator, denominator) = step.getLonelies().let {
+                try {
+                    Pair(it.first!!, it.second!!)
+                } catch (e: NullPointerException) {
+                    throw IllegalArgumentException("Can only displayWeirdOutput on steps with one-to-one conversions!")
+                }
+            }
+            if (index > 0) {
+                katexSteps.appendNewLine()
+            }
+            if (denominator == celsius && numerator == kelvin) {
+                katexSteps.appendAddingConversion(runningAnswer, celsius, ADD_TO_CELSIUS, kelvin)
+                putAnswerAgainAtEnd = false
+            } else if (denominator == kelvin && numerator == celsius) {
+                katexSteps.appendAddingConversion(runningAnswer, kelvin, -ADD_TO_CELSIUS, celsius)
+                putAnswerAgainAtEnd = false
+            } else if (denominator == fahrenheit && numerator == rankine) {
+                katexSteps.appendAddingConversion(runningAnswer, fahrenheit, ADD_TO_FAHRENHEIT, rankine)
+                putAnswerAgainAtEnd = false
+            } else if (denominator == rankine && numerator == fahrenheit) {
+                katexSteps.appendAddingConversion(runningAnswer, rankine, -ADD_TO_FAHRENHEIT, fahrenheit)
+                putAnswerAgainAtEnd = false
+            } else if (denominator == celsius && numerator == fahrenheit) {
+                katexSteps.appendCelsiusToFahrenheit(runningAnswer)
+            } else if (denominator == fahrenheit && numerator == celsius) {
+                katexSteps.appendFahrenheitToCelsius(runningAnswer)
+            } else {
+                katexSteps.appendValueAndUnits(Quantity(runningAnswer.value, mapOf(denominator to 1)))
+                katexSteps.appendConversion(step, 1)
+                step.apply(runningAnswer)
+            }
+        }
+        val realRight = right.withValue(runningAnswer.value)
+        finalValue = realRight
+        if (putAnswerAgainAtEnd) {
+            katexSteps.appendEqualsSign()
+            katexSteps.appendValueAndUnits(realRight)
+        }
+        outputValue.setDisplayText(KatexStringBuilder().let {
+            it.appendValueAndUnits(realRight)
+            it.toString()
+        })
+        conversionSteps.setDisplayText(katexSteps.toString())
     }
 
     private fun displayOutput(

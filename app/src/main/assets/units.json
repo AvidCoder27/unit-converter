@@ -36,6 +36,8 @@
         [
             "T",
             "kelvin; K",
+            "celsius, degree celsius; °C, C°, C; celsius, degrees celsius",
+            "fahrenheit, degree fahrenheit; °F, F°, F; fahrenheit, degrees fahrenheit",
             "rankine; Ra"
         ],
         [
@@ -164,6 +166,11 @@
         ]
     ],
     "conversions": [
+        "1 K = 1.8 Ra",
+        "1 °C = 1 K",
+        "1 °F = 1 Ra",
+        "1 °C = 1.8 °F",
+
         "mol = 6.02214076e23 things",
         "1 dozen = 12 things",
         "1 gross = 144 things",
@@ -233,7 +240,6 @@
         "short ton = 2000 lbs",
         "kg = 2.2046244202 lbs",
         "long ton = 1.12 short tons",
-        "kelvin = 1.8 rankine",
         "60 sec = 1 min",
         "60 min = 1 hour",
         "day = 24 hour",

@@ -5,20 +5,53 @@ import android.util.Log
 import org.json.JSONObject
 import kotlin.math.pow
 
+private const val TAG = "UnitStore"
 private const val PERCENT = "%"
 
 object UnitStore {
+    private val FUNDAMENTAL_UNIT_NAMES = setOf("m", "s", "K", "kg", "A", "mol", "cd", "rotation", "byte")
+
     private val unitNames: HashMap<String, SimpleUnit> = HashMap()
     private val aliases: HashMap<String, SimpleUnit> = HashMap()
     private val conversions: MutableList<Conversion> = mutableListOf()
+    private var loaded = false
 
     fun loadFromJson(context: Context) {
+        loaded = true
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
         val jsonObject = JSONObject(jsonString)
         loadUnits(jsonObject)
         loadAliases(jsonObject)
         loadConversions(jsonObject)
         computeComplexities()
+    }
+
+    /**
+     * For a name of a SimpleUnit, this will just return a mapOf(it to 1)
+     * So for those you can just take
+     * @return the unit or alias with the given name as a map of SimpleUnits to their exponents
+     * @throws UndefinedUnitException if the unit is not defined as a unit or an alias
+     */
+    fun getUnit(name: String): Map<SimpleUnit, Int> {
+        throwIfNotLoaded()
+        val casedName = name.lowercaseGreaterThan3()
+        unitNames[casedName]?.let { return mapOf(it to 1) }
+        aliases[casedName]?.let { return it.getComplexConversions().first().getOther(it).units }
+        unitNames.forEach { (key, value) ->
+            Log.e(TAG, "key: $key, value: $value")
+        }
+        throw UndefinedUnitException(casedName)
+    }
+
+    fun getDescriptions(): List<DescribedUnit> {
+        throwIfNotLoaded()
+        return (unitNames + aliases).values.distinct().map { it.describe() }.sorted()
+    }
+
+    private fun throwIfNotLoaded() {
+        if (!loaded) {
+            throw IllegalAccessError("Unable to access UnitStore before running loadFromJson()")
+        }
     }
 
     private fun loadConversions(jsonObject: JSONObject) =
@@ -57,7 +90,9 @@ object UnitStore {
                 val equalParts = splitConversionByEquals(aliasString)
                 val quantity = equalParts[1].intoQuantity()
                 val names = equalParts[0].extractNames()
-                val unit = createUnit(names.first, names.second, listOf(), quantity.dimensionality(), aliases)
+                val unit = createUnit(
+                    names.first, names.second, listOf(), quantity.dimensionality(), aliases
+                )
                 unit.addComplexConversion(Conversion(quantity, Quantity(1.0, mapOf(unit to 1))))
             }
         }
@@ -133,7 +168,8 @@ object UnitStore {
                 )
             } else {
                 Conversion(
-                    baseQuantity.multiply(10.0.pow(prefix.power)), Quantity(1.0, mapOf(prefixedUnit to 1))
+                    baseQuantity.multiply(10.0.pow(prefix.power)),
+                    Quantity(1.0, mapOf(prefixedUnit to 1))
                 )
             }
             addConversion(conversion, baseUnit, prefixedUnit)
@@ -168,14 +204,18 @@ object UnitStore {
         plurals: List<String>,
         abbreviations: List<String>,
         dimensionality: Map<DIMENSION, Int>,
-        map: HashMap<String,SimpleUnit>,
+        map: HashMap<String, SimpleUnit>,
     ): SimpleUnit {
         val unit = SimpleUnit(singulars, plurals, abbreviations, dimensionality)
         assignNames(singulars + plurals + abbreviations, unit, map)
         return unit
     }
 
-    private fun assignNames(names: List<String>, unit: SimpleUnit, map: HashMap<String, SimpleUnit>) {
+    private fun assignNames(
+        names: List<String>,
+        unit: SimpleUnit,
+        map: HashMap<String, SimpleUnit>,
+    ) {
         names.forEach {
             map[it.lowercaseGreaterThan3()] = unit
         }
@@ -186,9 +226,7 @@ object UnitStore {
         val unprocessed = distinctUnits.toMutableSet()
         val distance: HashMap<SimpleUnit, Int> = hashMapOf()
 
-        setOf(
-            "m", "s", "K", "kg", "A", "mol", "cd", "rotation", "byte"
-        ).forEach { name ->
+        FUNDAMENTAL_UNIT_NAMES.forEach { name ->
             val fundamental = getUnit(name).keys.first()
             fundamental.complexity = 0
             distance[fundamental] = 0
@@ -209,7 +247,7 @@ object UnitStore {
             }
             index = 1 + index - countRemoved
             if (index > distinctUnits.size * 3) {
-                Log.e("UnitStore", "unprocessed units: $unprocessed")
+                Log.e(TAG, "unprocessed units: $unprocessed")
                 throw Exception("index surpassed ${distinctUnits.size * 3} when processing units; are you sure all your units are connected?")
             }
         }
@@ -302,22 +340,4 @@ object UnitStore {
                 }
             })
         }
-
-    /**
-     * For a name of a SimpleUnit, this will just return a mapOf(it to 1)
-     * So for those you can just take
-     * @return the unit or alias with the given name as a map of SimpleUnits to their exponents
-     * @throws UndefinedUnitException if the unit is not defined as a unit or an alias
-     */
-    fun getUnit(name: String): Map<SimpleUnit, Int> {
-        val casedName = name.lowercaseGreaterThan3()
-        unitNames[casedName]?.let { return mapOf(it to 1) }
-        aliases[casedName]?.let { return it.getComplexConversions().first().getOther(it).units }
-        unitNames.forEach { (key, value) ->
-            Log.e("UnitStore", "key: $key, value: $value")
-        }
-        throw UndefinedUnitException(casedName)
-    }
-
-    fun getDescriptions() = (unitNames + aliases).values.distinct().map { it.describe() }.sorted()
 }

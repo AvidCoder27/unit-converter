@@ -13,6 +13,7 @@ import android.widget.Filterable
 import android.widget.ListAdapter
 import android.widget.TextView
 import android.widget.ThemedSpinnerAdapter
+import kotlin.math.max
 
 class DescribedUnitAdapter(
     private val context: Context,
@@ -28,33 +29,44 @@ class DescribedUnitAdapter(
                 results.count = list.size
             } else {
                 val prefixString = constraint.toString().lowercase()
-                val newValues = mutableMapOf<DescribedUnit, Boolean>()
+                val newValues = mutableListOf<Pair<DescribedUnit, Byte>>()
                 for (describedUnit in originalValues) {
-                    filterByAlts(describedUnit, prefixString, newValues)
+                    filterByAlts(describedUnit, prefixString).let {
+                        if (it > 0) newValues += Pair(describedUnit, it)
+                    }
                 }
-                // TODO make priority considered in sorting search results
-                results.values = newValues.keys.toList()
-                results.count = newValues.size
+
+                val actuallyNewValues =
+                    newValues.toList().sortedWith { (unit1, priority1), (unit2, priority2) ->
+                        val priorityComparison = priority2.compareTo(priority1)
+                        if (priorityComparison != 0) {
+                            priorityComparison
+                        } else {
+                            unit1.compareTo(unit2)
+                        }
+                    }.map { it.first }
+                results.values = actuallyNewValues
+                results.count = actuallyNewValues.size
             }
             return results
         }
 
-        private fun filterByAlts(
-            describedUnit: DescribedUnit,
-            searchString: String,
-            newValues: MutableMap<DescribedUnit, Boolean>,
-        ) {
+        private fun filterByAlts(describedUnit: DescribedUnit, searchString: String): Byte {
+            var highest = 0
             for (alt in describedUnit.alts) {
                 if (searchString.length > alt.length) continue
                 val lowerAlt = alt.lowercase()
-                val startsWith = lowerAlt.startsWith(searchString)
-                val contains = lowerAlt.contains(searchString)
-                if (startsWith || (searchString.length > 1 && contains)
-                ) {
-                    newValues[describedUnit] = startsWith
-                    return
+                if (lowerAlt == searchString) {
+                    highest = max(highest, 100)
+                }
+                if (lowerAlt.startsWith(searchString)) {
+                    highest = max(highest, 70)
+                }
+                if (lowerAlt.contains(searchString)) {
+                    highest = max(highest, 10)
                 }
             }
+            return highest.toByte()
         }
 
         override fun publishResults(constraint: CharSequence?, results: FilterResults?) {

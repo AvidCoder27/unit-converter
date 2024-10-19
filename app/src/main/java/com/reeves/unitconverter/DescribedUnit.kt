@@ -13,7 +13,6 @@ data class DescribedUnit(val name: String, val visibleAlts: List<String>, val al
         val len1 = this.name.length
         val len2 = other.name.length
 
-        // If lengths are equal, compare characters
         for (k in 0 until min(len1, len2)) {
             val c1 = this.name[k]
             val c2 = other.name[k]

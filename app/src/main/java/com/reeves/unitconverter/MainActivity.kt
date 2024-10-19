@@ -7,6 +7,7 @@ import android.widget.EditText
 import android.widget.MultiAutoCompleteTextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.snackbar.Snackbar
@@ -19,6 +20,19 @@ class MainActivity : AppCompatActivity() {
         setAdapter(adapter)
         setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
         return this
+    }
+
+    private fun EditText.fullClear() {
+        text.clear()
+        clearFocus()
+    }
+
+    private fun switchText(text1: EditText, text2: EditText) {
+        val temp = text1.text
+        text1.text = text2.text
+        text2.text = temp
+        text1.clearFocus()
+        text2.clearFocus()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,19 +69,10 @@ class MainActivity : AppCompatActivity() {
             endingNumerator,
             endingDenominator
         )
-        allFields.forEach {
-            it.clearTextOnDrawableEndClick()
-        }
 
         val converter = Converter(outputMathView, stepsMathView)
-
-        findViewById<Button>(R.id.clear_all).setOnClickListener {
-            allFields.forEach { it.fullClear() }
-            outputMathView.setDisplayText("")
-            stepsMathView.setDisplayText("")
-        }
-
-        findViewById<Button>(R.id.convert_button).setOnClickListener {
+        val convert = {
+            allFields.forEach { it.clearFocus() }
             @Suppress("DEPRECATION") ViewCompat.getWindowInsetsController(window.decorView)
                 ?.hide(WindowInsetsCompat.Type.ime())
             try {
@@ -89,6 +94,41 @@ class MainActivity : AppCompatActivity() {
                     else -> throw e
                 }
             }
+        }
+
+        allFields.forEach { field ->
+            field.onDrawableEndClick { it.fullClear() }
+        }
+
+        allFields.forEach { field ->
+            field.setOnFocusChangeListener { view, hasFocus ->
+                if (hasFocus && view is MultiAutoCompleteTextView) {
+                    view.showDropDown()
+                }
+            }
+        }
+
+        findViewById<Button>(R.id.clear_all).setOnClickListener {
+            allFields.forEach { it.fullClear() }
+            outputMathView.setDisplayText("")
+            stepsMathView.setDisplayText("")
+        }
+
+        findViewById<AppCompatImageButton>(R.id.switch_start_end_button).setOnClickListener {
+            switchText(startingNumerator, endingNumerator)
+            switchText(startingDenominator, endingDenominator)
+        }
+
+        findViewById<Button>(R.id.flip_start_button).setOnClickListener {
+            switchText(startingNumerator, startingDenominator)
+        }
+
+        findViewById<Button>(R.id.flip_end_button).setOnClickListener {
+            switchText(endingNumerator, endingDenominator)
+        }
+
+        findViewById<Button>(R.id.convert_button).setOnClickListener {
+            convert()
         }
     }
 }

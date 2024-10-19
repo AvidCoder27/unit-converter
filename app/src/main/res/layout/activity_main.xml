@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:context=".MainActivity">
-        
+
         <EditText
             android:id="@+id/input_value"
             android:layout_width="200dp"
@@ -25,15 +25,28 @@
             android:minHeight="48dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
         <Button
             android:id="@+id/clear_all"
             android:layout_width="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toEndOf="@id/input_value"
-            app:layout_constraintTop_toTopOf="@id/input_value"
+            android:layout_marginStart="16dp"
+            android:backgroundTint="@color/_red_button_red"
+            android:text="Clear All"
             app:layout_constraintBottom_toBottomOf="@id/input_value"
-            android:text="Clear All"/>
+            app:layout_constraintStart_toEndOf="@id/input_value"
+            app:layout_constraintTop_toTopOf="@id/input_value" />
+
+        <ImageButton
+            android:id="@+id/help_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:contentDescription="help button"
+            android:background="@drawable/help_circle"
+            app:layout_constraintBottom_toBottomOf="@id/clear_all"
+            app:layout_constraintStart_toEndOf="@id/clear_all"
+            app:layout_constraintTop_toTopOf="@id/clear_all" />
 
         <!--Starting units-->
         <TextView
@@ -123,13 +136,48 @@
             app:layout_constraintStart_toStartOf="@id/fraction_line_1"
             app:layout_constraintTop_toTopOf="@id/fraction_line_1" />
 
+        <ImageButton
+            android:id="@+id/switch_start_end_button"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/switch_arrows"
+            android:contentDescription="Swap starting and ending units"
+            app:layout_constraintBottom_toTopOf="@id/ending_numerator"
+            app:layout_constraintEnd_toEndOf="@id/starting_units_label"
+            app:layout_constraintStart_toStartOf="@id/starting_units_label"
+            app:layout_constraintTop_toBottomOf="@id/starting_denominator" />
+
+        <Button
+            android:id="@+id/flip_start_button"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:text="Flip Starting\n Units"
+            app:layout_constraintStart_toEndOf="@id/switch_start_end_button"
+            android:layout_marginStart="20dp"
+            app:layout_constraintTop_toTopOf="@id/switch_start_end_button"
+            app:layout_constraintBottom_toBottomOf="@id/switch_start_end_button"
+            />
+
+        <Button
+            android:id="@+id/flip_end_button"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:text="Flip Ending\nUnits"
+            app:layout_constraintStart_toEndOf="@id/flip_start_button"
+            android:layout_marginStart="20dp"
+            app:layout_constraintTop_toTopOf="@id/switch_start_end_button"
+            app:layout_constraintBottom_toBottomOf="@id/switch_start_end_button"
+            />
+
         <!--Ending units-->
         <TextView
             android:id="@+id/ending_units_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="86dp"
+            android:layout_marginTop="124dp"
             android:text="Ending\nUnits:"
             android:textAlignment="center"
             android:textSize="18sp"
@@ -245,7 +293,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/output_value_label"
-            app:setTextSize="14sp"></com.reeves.unitconverter.MathView>
+            app:setTextSize="14sp" />
 
         <TextView
             android:id="@+id/conversion_steps_label"

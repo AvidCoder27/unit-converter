@@ -17,10 +17,10 @@ private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
 
-    private fun MultiAutoCompleteTextView.setup(adapter: DescribedUnitAdapter): MultiAutoCompleteTextView {
-        setAdapter(adapter)
+    private fun MultiAutoCompleteTextView.setup(descriptions: List<DescribedUnit>): MultiAutoCompleteTextView {
+        setAdapter(DescribedUnitAdapter(this@MainActivity, descriptions))
         setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
-        return this
+        return this@setup
     }
 
     private fun EditText.fullClear() {
@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         UnitStore.loadFromJson(this)
 
-        val adapter = DescribedUnitAdapter(this, UnitStore.getDescriptions())
+        val descriptions = UnitStore.getDescriptions()
 
         val outputMathView = findViewById<MathView>(R.id.output_value)
         val stepsMathView = findViewById<MathView>(R.id.conversion_steps)
@@ -56,13 +56,13 @@ class MainActivity : AppCompatActivity() {
 
         val inputValueField = findViewById<EditText>(R.id.input_value)
         val startingNumerator =
-            findViewById<MultiAutoCompleteTextView>(R.id.starting_numerator).setup(adapter)
+            findViewById<MultiAutoCompleteTextView>(R.id.starting_numerator).setup(descriptions)
         val startingDenominator =
-            findViewById<MultiAutoCompleteTextView>(R.id.starting_denominator).setup(adapter)
+            findViewById<MultiAutoCompleteTextView>(R.id.starting_denominator).setup(descriptions)
         val endingNumerator =
-            findViewById<MultiAutoCompleteTextView>(R.id.ending_numerator).setup(adapter)
+            findViewById<MultiAutoCompleteTextView>(R.id.ending_numerator).setup(descriptions)
         val endingDenominator =
-            findViewById<MultiAutoCompleteTextView>(R.id.ending_denominator).setup(adapter)
+            findViewById<MultiAutoCompleteTextView>(R.id.ending_denominator).setup(descriptions)
 
         val allFields = listOf(
             inputValueField,
@@ -127,6 +127,11 @@ class MainActivity : AppCompatActivity() {
             field.onDrawableEndClick { it.fullClear() }
             field.setOnFocusChangeListener { view, hasFocus ->
                 if (hasFocus && view is MultiAutoCompleteTextView) {
+                    view.showDropDown()
+                }
+            }
+            field.setOnClickListener { view ->
+                if (view is MultiAutoCompleteTextView) {
                     view.showDropDown()
                 }
             }

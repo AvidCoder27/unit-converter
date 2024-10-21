@@ -132,6 +132,10 @@
             "barrel|s, standard barrel of oil; bbl|s"
         ],
         [
+            "/t",
+            "%hertz; %Hz; %Hz"
+        ],
+        [
             "m*d/t^2",
             "newton|s; N",
             "pound-force, pounds-force, lb-force; lbf",
@@ -166,6 +170,8 @@
         ]
     ],
     "conversions": [
+        "1 hertz = 1 /second",
+
         "1 K = 1.8 Ra",
         "1 °C = 1 K",
         "1 °F = 1 Ra",

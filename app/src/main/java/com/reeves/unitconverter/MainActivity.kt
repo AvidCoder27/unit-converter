@@ -149,14 +149,17 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.switch_start_end_button).setOnClickListener {
             switchText(startingNumerator, endingNumerator)
             switchText(startingDenominator, endingDenominator)
+            convert()
         }
 
         findViewById<Button>(R.id.flip_start_button).setOnClickListener {
             switchText(startingNumerator, startingDenominator)
+            convert()
         }
 
         findViewById<Button>(R.id.flip_end_button).setOnClickListener {
             switchText(endingNumerator, endingDenominator)
+            convert()
         }
 
         findViewById<Button>(R.id.convert_button).setOnClickListener {

@@ -1,5 +1,12 @@
 package com.reeves.unitconverter
 
+import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.view.MotionEvent
+import android.widget.EditText
+
 data class RunningAnswer(var value: Double) {
     override fun toString(): String = value.toString()
 }
@@ -7,14 +14,15 @@ data class RunningAnswer(var value: Double) {
 class InvalidUnitsException(culprit: String) :
     Exception("`$culprit` is not a valid sequence of units")
 
-class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit")
+class UndefinedUnitException(culprit: String) : Exception("`$culprit` is not a defined unit.")
 class ImpossibleConversionException : Exception("This conversion is impossible!")
+class RequiresFlippingException :
+    Exception("This conversion is impossible until one side is flipped.")
 
 class MeaninglessConversionException(cause: String) :
     Exception("This conversion is meaningless because $cause")
 
-class PromotionRequiredException :
-    Exception("This conversion cannot be completed until promoted to a more rigorous method")
+class PromotionRequiredException : Exception()
 
 /**
  * @throws UndefinedUnitException
@@ -77,4 +85,26 @@ fun String.extractValue(): Pair<Double, String> {
         if (it == null) Pair(1.0, this.trim())
         else Pair(it.value.trim().toDouble(), substring(it.range.last + 1).trim())
     }
+}
+
+@SuppressLint("ClickableViewAccessibility")
+fun EditText.onDrawableEndClick(action: (EditText) -> Unit) {
+    setOnTouchListener { v, event ->
+        if (event.action == MotionEvent.ACTION_UP) {
+            v as EditText
+            val end = v.right
+            if (event.rawX >= (end - v.compoundPaddingEnd)) {
+                action.invoke(v)
+                return@setOnTouchListener true
+            }
+        }
+        return@setOnTouchListener false
+    }
+}
+
+fun Context.copyToClipboard(text: String?) {
+    if (text == null) return
+    val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clipData = ClipData.newPlainText("text", text)
+    clipboardManager.setPrimaryClip(clipData)
 }

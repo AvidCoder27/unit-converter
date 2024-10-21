@@ -1,11 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     style="?android:attr/dropDownItemStyle"
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    android:background="@color/list_item_background"
-    android:ellipsize="marquee"
-    android:maxLines="1"
-    android:padding="16dp"
-    android:singleLine="true"
-    android:textAppearance="?android:attr/textAppearanceLargePopupMenu" />
+    android:background="@color/list_item_background">
+
+    <TextView
+        android:id="@+id/name_tv"
+        style="?android:attr/dropDownItemStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="marquee"
+        android:maxLines="1"
+        android:padding="16dp"
+        android:singleLine="true"
+        android:textAppearance="?android:attr/textAppearanceLargePopupMenu"
+        android:textSize="17sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="MMMMMMMM" />
+
+    <TextView
+        android:id="@+id/description_tv"
+        style="?android:attr/dropDownItemStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:ellipsize="marquee"
+        android:maxLines="1"
+        android:padding="16dp"
+        android:singleLine="true"
+        android:textAppearance="?android:attr/textAppearanceLargePopupMenu"
+        android:textSize="17sp"
+        android:alpha="0.9"
+        app:layout_constraintBottom_toBottomOf="@id/name_tv"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/name_tv"
+        tools:text="(MMMMMMMMMMMMMMMM)" />
+</androidx.constraintlayout.widget.ConstraintLayout>

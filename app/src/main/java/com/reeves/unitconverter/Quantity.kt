@@ -21,11 +21,14 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         }
     }).clean()
 
+    fun multiply(value: Double) = Quantity(this.value * value, units)
+
     fun divide(other: Quantity) = multiply(other.inverse())
 
     fun divide(unit: SimpleUnit) = divide(Quantity(1.0, mapOf(unit to 1)))
 
-    fun pow(exponent: Int) = Quantity(value.pow(exponent), units.mapValues { (_, power) -> power * exponent })
+    fun pow(exponent: Int) =
+        Quantity(value.pow(exponent), units.mapValues { (_, power) -> power * exponent })
 
     fun inverse() = Quantity(1.0 / value, units.mapValues { -it.value })
 
@@ -45,11 +48,19 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         else listOf()
     }
 
+    fun formatToString(formatter: ScientificFormatter = ScientificFormatter()) = buildString {
+        append(formatter.format(value))
+        append(" ")
+        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString(" × "))
+    }
+
     override fun iterator(): Iterator<Map.Entry<SimpleUnit, Int>> = units.iterator()
 
     override fun toString(): String = buildString {
-        append(value)
-        append(" ")
-        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString(" * "))
+        if (value != 1.0) {
+            append(value)
+            append(" ")
+        }
+        append(units.map { it.key.abbreviation() + it.value.toSuperscript() }.joinToString(" × "))
     }
 }

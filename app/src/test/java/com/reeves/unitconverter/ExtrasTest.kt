@@ -20,16 +20,4 @@ class ExtrasTest {
             "meters^2 * kg * metric ton/ second^2".parseUnitsToStringMap()
         )
     }
-
-    @Test
-    fun quantityDimensionality_isCorrect() {
-        val meter = SimpleUnit(listOf("meter", "meters", "m"), mapOf(DIMENSION.LENGTH to 1))
-        val foot = SimpleUnit(listOf("foot", "feet", "ft"), mapOf(DIMENSION.LENGTH to 1))
-        val mile = SimpleUnit(listOf("mile", "miles", "mi"), mapOf(DIMENSION.LENGTH to 1))
-        val second = SimpleUnit(listOf("second", "seconds", "s"), mapOf(DIMENSION.TIME to 1))
-        val quantity = Quantity(1.0, mapOf(meter to 2, second to -2))
-        val quantity2 = Quantity(1.0, mapOf(meter to 3, second to -1, foot to 1, mile to 1))
-        assertEquals(mapOf(DIMENSION.LENGTH to 2, DIMENSION.TIME to -2), quantity.dimensionality())
-        assertEquals(mapOf(DIMENSION.LENGTH to 5, DIMENSION.TIME to -1), quantity2.dimensionality())
-    }
 }

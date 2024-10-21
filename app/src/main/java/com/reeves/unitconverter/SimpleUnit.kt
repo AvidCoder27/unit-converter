@@ -1,23 +1,33 @@
 package com.reeves.unitconverter
 
-data class SimpleUnit(private val names: List<String>, val dimensionality: Map<DIMENSION, Int>) {
+data class SimpleUnit(
+    private val singulars: List<String>,
+    private val plurals: List<String>,
+    private val abbreviations: List<String>,
+    val dimensionality: Map<DIMENSION, Int>,
+) {
     var complexity: Int = Int.MAX_VALUE
-    private val conversions: MutableSet<Conversion> = mutableSetOf()
-    private val connections: MutableSet<Conversion> = mutableSetOf()
+    private val simpleConversions: MutableSet<Conversion> = mutableSetOf()
+    private val complexConversions: MutableSet<Conversion> = mutableSetOf()
 
-    fun addConversion(conversion: Conversion) = conversions.add(conversion)
+    init {
+        assert(singulars.isNotEmpty()) { "Cannot create unit with empty Singulars" }
+    }
 
-    fun addConnection(connection: Conversion) = connections.add(connection)
+    fun addSimpleConversion(conversion: Conversion) = simpleConversions.add(conversion)
 
-    fun getConversions(): List<Conversion> = conversions.toList()
+    fun addComplexConversion(connection: Conversion) = complexConversions.add(connection)
 
-    fun getConnections(): List<Conversion> = connections.toList()
+    fun getSimpleConversions(): List<Conversion> = simpleConversions.toList()
+
+    fun getComplexConversions(): List<Conversion> = complexConversions.toList()
 
     fun getOneToOneConversions(): List<SimpleUnit> =
-        conversions.toList().map { it.getOther(this) }.filter { it.units.size == 1 }.map { it.units.keys.first() }
+        simpleConversions.toList().map { it.getOther(this) }.filter { it.units.size == 1 }
+            .map { it.units.keys.first() }
 
-    fun getConversionTo(other: SimpleUnit): Conversion {
-        conversions.forEach {
+    fun getConversionToUnit(other: SimpleUnit): Conversion {
+        simpleConversions.forEach {
             if (it.numerator.units.size == 1 && it.numerator.units.containsKey(other)) {
                 return it
             }
@@ -28,8 +38,8 @@ data class SimpleUnit(private val names: List<String>, val dimensionality: Map<D
         throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")
     }
 
-    fun getConnectionTo(other: Quantity): Conversion {
-        connections.forEach {
+    fun getConversionToQuantity(other: Quantity): Conversion {
+        complexConversions.forEach {
             if (it.numerator == other) {
                 return it
             }
@@ -40,8 +50,14 @@ data class SimpleUnit(private val names: List<String>, val dimensionality: Map<D
         throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")
     }
 
-    fun singular(): String = names[0]
-    fun plural(): String = if (names.size > 1) names[1] else singular()
-    fun abbreviation(): String = if (names.size > 2) names[2] else plural()
+    fun describe() = DescribedUnit(
+        plural(),
+        abbreviations,
+        singulars + plurals + abbreviations
+    )
+
+    fun singular(): String = singulars.first()
+    fun plural(): String = plurals.getOrNull(0) ?: singular()
+    fun abbreviation(): String = abbreviations.getOrNull(0) ?: plural()
     override fun toString(): String = abbreviation()
 }

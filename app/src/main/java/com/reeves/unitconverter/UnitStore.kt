@@ -16,15 +16,18 @@ object UnitStore {
     private val aliases: HashMap<String, SimpleUnit> = HashMap()
     private val conversions: MutableList<Conversion> = mutableListOf()
     private var loaded = false
+    private lateinit var thing: SimpleUnit
 
     fun loadFromJson(context: Context) {
         loaded = true
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
         val jsonObject = JSONObject(jsonString)
         loadUnits(jsonObject)
+        thing = getUnit("thing").keys.first()
         loadAliases(jsonObject)
         loadConversions(jsonObject)
         computeComplexities()
+        Log.i(TAG, "Loaded ${unitNames.size} units")
     }
 
     /**
@@ -47,6 +50,11 @@ object UnitStore {
     fun getDescriptions(): List<DescribedUnit> {
         throwIfNotLoaded()
         return (unitNames + aliases).values.distinct().map { it.describe() }.sorted()
+    }
+
+    fun getThing(): SimpleUnit {
+        throwIfNotLoaded()
+        return thing
     }
 
     private fun throwIfNotLoaded() {

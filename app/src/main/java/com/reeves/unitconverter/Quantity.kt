@@ -49,6 +49,12 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         else listOf()
     }
 
+    fun onlySimpleNumberUnits() =
+        Quantity(value, units.filterKeys { it.dimensionality.map.keys == setOf(DIMENSION.NUMBER) })
+
+    fun withoutSimpleNumberUnits() =
+        Quantity(value, units.filterKeys { it.dimensionality.map.keys != setOf(DIMENSION.NUMBER) })
+
     fun formatToString(formatter: ScientificFormatter = ScientificFormatter()) = buildString {
         append(formatter.format(value))
         append(" ")

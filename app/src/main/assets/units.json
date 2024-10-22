@@ -200,7 +200,7 @@
         [
             "m / t^2 / I",
             "%tesla|s; %T",
-            "%gauss|; %G, %Gs"
+            "%gauss|; %Gs"
         ],
         [
             "m * d^2 / t^2 / I^2",

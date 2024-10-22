@@ -2,6 +2,7 @@ package com.reeves.unitconverter
 
 import android.util.Log
 import kotlin.math.absoluteValue
+import kotlin.math.max
 import kotlin.math.sign
 
 private const val TAG = "Converter"
@@ -46,6 +47,11 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
             else it
         }
 
+        val leftNumberUnits = left.onlySimpleNumberUnits()
+        val rightNumberUnits = right.onlySimpleNumberUnits()
+        val leftNonNumberUnits = left.withoutSimpleNumberUnits()
+        val rightNonNumberUnits = right.withoutSimpleNumberUnits()
+
         val runningAnswer = RunningAnswer(inputValue)
         var doingSimpleTempConversion = false
         val steps = mutableListOf<Conversion>().runCatching {
@@ -61,22 +67,38 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
                 addAll(traversePath(path, runningAnswer, false))
                 doingSimpleTempConversion = true
             } else {
-                for (path in findPathsBetween(left, right, true)) {
+                for (path in findPathsBetween(leftNumberUnits, rightNumberUnits, true, fillWithThings = true)) {
                     addAll(traversePath(path, runningAnswer, false))
                 }
-                for (path in findPathsBetween(left, right, false)) {
+                for (path in findPathsBetween(leftNumberUnits, rightNumberUnits, false, fillWithThings = true)) {
                     addAll(traversePath(path, runningAnswer, true))
                 }
+                for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, true)) {
+                    addAll(traversePath(path, runningAnswer, false))
+                }
+                for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, false)) {
+                    addAll(traversePath(path, runningAnswer, true))
+                }
+                Log.d(TAG, "convert: simple conversion")
             }
             this
         }.getOrElse { failure ->
             if (failure !is PromotionRequiredException) throw failure
+            Log.d(TAG, "convert: promoted conversion")
             mutableListOf<Conversion>().apply {
-                for (conversion in pathToFundamentals(left, true)) {
+                for (conversion in pathToFundamentals(leftNumberUnits, true)) {
                     add(conversion)
                     conversion.apply(runningAnswer)
                 }
-                for (conversion in pathToFundamentals(right, false).reversed()) {
+                for (conversion in pathToFundamentals(rightNumberUnits, false).reversed()) {
+                    add(conversion)
+                    conversion.apply(runningAnswer)
+                }
+                for (conversion in pathToFundamentals(leftNonNumberUnits, true)) {
+                    add(conversion)
+                    conversion.apply(runningAnswer)
+                }
+                for (conversion in pathToFundamentals(rightNonNumberUnits, false).reversed()) {
                     add(conversion)
                     conversion.apply(runningAnswer)
                 }
@@ -290,19 +312,34 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
     }
 
     private fun findPathsBetween(
-        starts: Quantity, ends: Quantity, top: Boolean,
+        starts: Quantity, ends: Quantity, top: Boolean, fillWithThings: Boolean = false
     ): List<List<SimpleUnit>> = mutableListOf<List<SimpleUnit>>().also {
         val expandedEnds = ends.expand(top).toMutableList()
-        for (start in starts.expand(top)) {
+        val expandedStarts = starts.expand(top).toMutableList()
+        if (fillWithThings) {
+            val lim = max(expandedStarts.size, expandedEnds.size)
+            while (expandedEnds.size < lim) {
+                expandedEnds.add(UnitStore.getThing())
+            }
+            while (expandedStarts.size < lim) {
+                expandedStarts.add(UnitStore.getThing())
+            }
+        }
+        for (start in expandedStarts) {
             val shortestPath = findFirstShortestPath(start, expandedEnds)
             if (shortestPath.isEmpty()) {
+                Log.d(TAG, "findPathsBetween: unable to convert `$start` to any of `$ends`, promotion required")
                 throw PromotionRequiredException()
+            } else {
+                it.add(shortestPath)
             }
-            it.add(shortestPath)
         }
         // if we were unable to convert all the starts to ends,
         // then this method fails and we promote
-        if (expandedEnds.isNotEmpty()) throw PromotionRequiredException()
+        if (expandedEnds.isNotEmpty()) {
+            Log.d(TAG, "findPathsBetween: unable to convert all starts (`$starts`) to ends (`$ends`), promotion required")
+            throw PromotionRequiredException()
+        }
     }.toList()
 
     private fun findFirstShortestPath(

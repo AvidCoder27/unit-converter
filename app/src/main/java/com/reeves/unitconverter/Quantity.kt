@@ -5,13 +5,14 @@ import kotlin.math.pow
 data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
     Iterable<Map.Entry<SimpleUnit, Int>> {
 
-    fun dimensionality(): Map<DIMENSION, Int> = mutableMapOf<DIMENSION, Int>().also { map ->
-        units.forEach { (unit, unitCount) ->
-            unit.dimensionality.forEach { (dimension, dimensionCount) ->
-                map[dimension] = (map[dimension] ?: 0) + unitCount * dimensionCount
+    fun dimensionality(): Dimensionality =
+        Dimensionality(mutableMapOf<DIMENSION, Int>().also { map ->
+            units.forEach { (unit, unitCount) ->
+                unit.dimensionality.map.forEach { (dimension, dimensionCount) ->
+                    map[dimension] = (map[dimension] ?: 0) + unitCount * dimensionCount
+                }
             }
-        }
-    }
+        })
 
     fun complexity(): Int = units.keys.sumOf { it.complexity } - units.size
 

@@ -9,7 +9,8 @@ private const val TAG = "UnitStore"
 private const val PERCENT = "%"
 
 object UnitStore {
-    private val FUNDAMENTAL_UNIT_NAMES = setOf("m", "s", "K", "kg", "A", "mol", "cd", "rotation", "byte")
+    private val FUNDAMENTAL_UNIT_NAMES =
+        setOf("m", "s", "K", "kg", "A", "thing", "cd", "rotation", "byte")
 
     private val unitNames: HashMap<String, SimpleUnit> = HashMap()
     private val aliases: HashMap<String, SimpleUnit> = HashMap()
@@ -100,9 +101,8 @@ object UnitStore {
     private fun loadUnits(jsonObject: JSONObject) = jsonObject.getJSONArray("units").let { array ->
         for (i in 0 until array.length()) {
             val alikeUnitsArray = array.getJSONArray(i)
-            val dimensionality: Map<DIMENSION, Int> =
-                alikeUnitsArray.getString(0).parseUnitsToStringMap()
-                    .mapKeys { stringToDimension(it.key) }
+            val dimensionality = Dimensionality(alikeUnitsArray.getString(0).parseUnitsToStringMap()
+                .mapKeys { stringToDimension(it.key) })
             for (j in 1 until alikeUnitsArray.length()) {
                 val line = alikeUnitsArray.getString(j)
                 if (line.startsWith(PERCENT)) {
@@ -132,7 +132,7 @@ object UnitStore {
 
     private fun createPrefixedUnit(
         line: String,
-        dimensionality: Map<DIMENSION, Int>,
+        dimensionality: Dimensionality,
     ) {
         val (singulars, plurals, abbreviations) = line.extractNames()
         val allNames = singulars + plurals + abbreviations
@@ -180,7 +180,7 @@ object UnitStore {
         singulars: List<String>,
         plurals: List<String>,
         abbreviations: List<String>,
-        dimensionality: Map<DIMENSION, Int>,
+        dimensionality: Dimensionality,
     ): SimpleUnit {
         val names = (singulars + plurals + abbreviations)
         if (names.any { unitNames.containsKey(it) }) {
@@ -203,7 +203,7 @@ object UnitStore {
         singulars: List<String>,
         plurals: List<String>,
         abbreviations: List<String>,
-        dimensionality: Map<DIMENSION, Int>,
+        dimensionality: Dimensionality,
         map: HashMap<String, SimpleUnit>,
     ): SimpleUnit {
         val unit = SimpleUnit(singulars, plurals, abbreviations, dimensionality)

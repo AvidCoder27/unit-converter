@@ -4,7 +4,7 @@ data class SimpleUnit(
     private val singulars: List<String>,
     private val plurals: List<String>,
     private val abbreviations: List<String>,
-    val dimensionality: Map<DIMENSION, Int>,
+    val dimensionality: Dimensionality,
 ) {
     var complexity: Int = Int.MAX_VALUE
     private val simpleConversions: MutableSet<Conversion> = mutableSetOf()
@@ -51,9 +51,7 @@ data class SimpleUnit(
     }
 
     fun describe() = DescribedUnit(
-        plural(),
-        abbreviations,
-        singulars + plurals + abbreviations
+        plural(), abbreviations, singulars + plurals + abbreviations
     )
 
     fun singular(): String = singulars.first()

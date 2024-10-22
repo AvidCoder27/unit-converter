@@ -49,7 +49,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         val runningAnswer = RunningAnswer(inputValue)
         var doingSimpleTempConversion = false
         val steps = mutableListOf<Conversion>().runCatching {
-            if (left.dimensionality() == mapOf(DIMENSION.TEMPERATURE to 1) && left.units.size == 1 && right.units.size == 1) {
+            if (left.dimensionality().map == mapOf(DIMENSION.TEMPERATURE to 1) && left.units.size == 1 && right.units.size == 1) {
                 Log.d(TAG, "convert: simple temp conversion")
                 val path = findPathsBetween(left, right, true).let {
                     if (it.size != 1) {
@@ -181,20 +181,23 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
     }
 
     private fun validateConversion(left: Quantity, right: Quantity): Boolean {
-        val leftDimensionality = left.dimensionality().clean()
-        val rightDimensionality = right.dimensionality().clean()
+        val leftDimensionality = left.dimensionality()
+        val rightDimensionality = right.dimensionality()
         Log.d(TAG, "validateConversion: left: $leftDimensionality, right: $rightDimensionality")
         if (left === right) {
             throw MeaninglessConversionException("the input and output are the same!")
         }
-        if (leftDimensionality.isEmpty() || rightDimensionality.isEmpty()) {
+        if (leftDimensionality.map.isEmpty() && rightDimensionality.map.isEmpty()) {
             throw MeaninglessConversionException("all the units cancel out!")
         }
-        if (leftDimensionality == rightDimensionality.mapValues { -it.value }) {
-            return true
-            //throw RequiresFlippingException()
+        if (leftDimensionality.removeNumberDimension() == rightDimensionality.removeNumberDimension()) {
+            return false
         }
-        if (leftDimensionality == rightDimensionality) return false
+        if (leftDimensionality.removeNumberDimension() == rightDimensionality.removeNumberDimension()
+                .mapValues { -it.value }
+        ) {
+            return true
+        }
         throw ImpossibleConversionException()
     }
 
@@ -225,17 +228,25 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
                 katexSteps.appendAddingConversion(runningAnswer, kelvin, -ADD_TO_CELSIUS, celsius)
                 putAnswerAgainAtEnd = false
             } else if (denominator == fahrenheit && numerator == rankine) {
-                katexSteps.appendAddingConversion(runningAnswer, fahrenheit, ADD_TO_FAHRENHEIT, rankine)
+                katexSteps.appendAddingConversion(
+                    runningAnswer, fahrenheit, ADD_TO_FAHRENHEIT, rankine
+                )
                 putAnswerAgainAtEnd = false
             } else if (denominator == rankine && numerator == fahrenheit) {
-                katexSteps.appendAddingConversion(runningAnswer, rankine, -ADD_TO_FAHRENHEIT, fahrenheit)
+                katexSteps.appendAddingConversion(
+                    runningAnswer, rankine, -ADD_TO_FAHRENHEIT, fahrenheit
+                )
                 putAnswerAgainAtEnd = false
             } else if (denominator == celsius && numerator == fahrenheit) {
                 katexSteps.appendCelsiusToFahrenheit(runningAnswer)
             } else if (denominator == fahrenheit && numerator == celsius) {
                 katexSteps.appendFahrenheitToCelsius(runningAnswer)
             } else {
-                katexSteps.appendValueAndUnits(Quantity(runningAnswer.value, mapOf(denominator to 1)))
+                katexSteps.appendValueAndUnits(
+                    Quantity(
+                        runningAnswer.value, mapOf(denominator to 1)
+                    )
+                )
                 katexSteps.appendConversion(step, 1)
                 step.apply(runningAnswer)
             }

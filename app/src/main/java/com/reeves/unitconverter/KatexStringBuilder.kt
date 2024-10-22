@@ -137,10 +137,10 @@ class KatexStringBuilder {
     }
 
     private fun Pair<SimpleUnit, Int>.katex(action: (SimpleUnit) -> String) = " \\text{${
-        action(first).replace(
-            "μ", "}\\mu \\text{"
-        ).replace(
-            "°", "\\degree "
-        )
+        action(first)
+            .replace("μ", "}\\mu \\text{")
+            .replace("°", "\\degree ")
+            .replace("pi", "}\\pi \\text{")
+            .replace("π", "}\\pi \\text{")
     }}" + if (second != 1) "^{$second}" else ""
 }

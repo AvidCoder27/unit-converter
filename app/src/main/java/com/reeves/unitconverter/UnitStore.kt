@@ -41,9 +41,6 @@ object UnitStore {
         val casedName = name.lowercaseGreaterThan3()
         unitNames[casedName]?.let { return mapOf(it to 1) }
         aliases[casedName]?.let { return it.getComplexConversions().first().getOther(it).units }
-        unitNames.forEach { (key, value) ->
-            Log.e(TAG, "key: $key, value: $value")
-        }
         throw UndefinedUnitException(casedName)
     }
 

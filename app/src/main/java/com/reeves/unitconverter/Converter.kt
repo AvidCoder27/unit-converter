@@ -47,10 +47,8 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
             else it
         }
 
-        val leftNumberUnits = left.onlySimpleNumberUnits()
-        val rightNumberUnits = right.onlySimpleNumberUnits()
-        val leftNonNumberUnits = left.withoutSimpleNumberUnits()
-        val rightNonNumberUnits = right.withoutSimpleNumberUnits()
+        val (leftNumberUnits, leftNonNumberUnits) = left.splitByNumberUnits()
+        val (rightNumberUnits, rightNonNumberUnits) = right.splitByNumberUnits()
 
         val runningAnswer = RunningAnswer(inputValue)
         var doingSimpleTempConversion = false

@@ -42,6 +42,28 @@ fun String.intoQuantity(): Quantity {
     }
 }
 
+fun String.intoQuantityAndChemical(): Pair<Quantity, List<ChemicalCompound>> {
+    if (this.isBlank()) return Pair(Quantity(1.0, mapOf()), listOf())
+    val compounds = mutableListOf<ChemicalCompound>()
+    return extractValue().let { (value, text) ->
+        val unitMap = mutableMapOf<SimpleUnit, Int>().also { map ->
+            text.parseUnitsToStringMap().forEach { (name, unitExponent) ->
+                if (name.startsWith('[') && name.endsWith(']')) {
+                    compounds.add(ChemicalParser.parseFormula(name.substring(1, name.length - 1)))
+                } else {
+                    val subMap = UnitStore.getUnit(name)
+                    subMap.forEach { (unit, aliasExponent) ->
+                        map[unit] = (map[unit] ?: 0) + unitExponent * aliasExponent
+                    }
+                }
+            }
+        }.clean()
+        Pair(
+            Quantity(value, unitMap), compounds
+        )
+    }
+}
+
 fun String.lowercaseGreaterThan3() = if (this.length > 2) this.lowercase() else this
 
 fun <T> Map<T, Int>.clean() = this.filterValues { it != 0 }
@@ -65,9 +87,26 @@ fun Int.toSuperscript(ignore1: Boolean = true, throwZero: Boolean = true): Strin
     return this.toString().map { superscriptChars[it] ?: it }.joinToString("")
 }
 
+fun Int.toSubscript(): String {
+    val superscriptChars = mapOf(
+        '0' to '\u2080',
+        '1' to '\u2081',
+        '2' to '\u2082',
+        '3' to '\u2083',
+        '4' to '\u2084',
+        '5' to '\u2085',
+        '6' to '\u2086',
+        '7' to '\u2087',
+        '8' to '\u2088',
+        '9' to '\u2089',
+        '-' to '\u208B'
+    )
+    return this.toString().map { superscriptChars[it] ?: it }.joinToString("")
+}
+
 @Throws(InvalidUnitsException::class)
 fun String.parseUnitsToStringMap(): Map<String, Int> = mutableMapOf<String, Int>().also {
-    Regex("([,*/]?\\s*(?:[\\w-]+\\s*)+\\^?\\d*)").findAll(this).forEach { matchResult ->
+    Regex("([,*/]?\\s*(?:[\\w-\\[\\]()]+\\s*)+\\^?\\d*)").findAll(this).forEach { matchResult ->
         val term = matchResult.value.trim()
         val parts = term.split("^")
         val unit = parts[0].replace("*", "").replace("/", "").replace(",", "").trim()

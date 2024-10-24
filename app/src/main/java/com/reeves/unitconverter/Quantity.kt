@@ -49,11 +49,18 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         else listOf()
     }
 
-    fun onlySimpleNumberUnits() =
-        Quantity(value, units.filterKeys { it.dimensionality.map.keys == setOf(DIMENSION.NUMBER) })
-
-    fun withoutSimpleNumberUnits() =
-        Quantity(value, units.filterKeys { it.dimensionality.map.keys != setOf(DIMENSION.NUMBER) })
+    fun splitByNumberUnits(): Pair<Quantity, Quantity> {
+        val withMap = mutableMapOf<SimpleUnit, Int>()
+        val withoutMap = mutableMapOf<SimpleUnit, Int>()
+        units.forEach { (unit, count) ->
+            if (unit.dimensionality.map.keys == setOf(DIMENSION.NUMBER)) {
+                withMap[unit] = count
+            } else {
+                withoutMap[unit] = count
+            }
+        }
+        return Pair(Quantity(value, withMap), Quantity(value, withoutMap))
+    }
 
     fun formatToString(formatter: ScientificFormatter = ScientificFormatter()) = buildString {
         append(formatter.format(value))

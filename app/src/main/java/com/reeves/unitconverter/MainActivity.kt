@@ -99,7 +99,13 @@ class MainActivity : AppCompatActivity() {
                 copyOutputButton.visibility = View.VISIBLE
             } catch (e: Exception) {
                 when (e) {
-                    is InvalidUnitsException, is UndefinedUnitException, is ImpossibleConversionException, is MeaninglessConversionException, is RequiresFlippingException -> {
+                    is InvalidUnitsException,
+                    is UndefinedUnitException,
+                    is ImpossibleConversionException,
+                    is MeaninglessConversionException,
+                    is RequiresFlippingException,
+                    is InvalidChemicalException,
+                        -> {
                         snackBar = Snackbar.make(
                             window.decorView, "ERROR: ${e.message}", Snackbar.LENGTH_INDEFINITE
                         )

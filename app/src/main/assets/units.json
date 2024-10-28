@@ -76,9 +76,10 @@
         ],
         [
             "r",
-            "rotation|s",
+            "rotation|s, turn|s, revolution|s, cycle|s; rev, tr, pla, cyc",
             "degree|s; deg|s",
             "radian|s; rad|s",
+            "milliradian|s; mrad",
             "gradian|s, gon|s, grade|s; grad|s",
             "arcminute|s; arcmin, ′, amin",
             "arcsecond|s; arcsec, ″, asec"
@@ -178,6 +179,10 @@
             "millibar|s"
         ],
         [
+            "d / t",
+            "knot|s; kn"
+        ],
+        [
             "m * d^2 / t^3 / I",
             "%volt|s; %V"
         ],
@@ -205,9 +210,21 @@
         [
             "m * d^2 / t^2 / I^2",
             "%henry|s; %H"
+        ],
+        [
+            "m * d^2 / t^2 / T ",
+            "boltzmann constant"
+        ],
+        [
+            "m * d^2 / t",
+            "planck constant; h"
         ]
     ],
     "conversions": [
+        "1000 mrad = 1 radian",
+        "knot = nautical mile / hour",
+        "planck constant = 6.62607015e−34 joules / Hz",
+        "boltzmann constant = 1.380649e−23 joules / kelvin",
         "henry = Wb / A",
         "10000 gauss = 1 tesla",
         "tesla = Wb / m^2",

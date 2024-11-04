@@ -61,6 +61,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
                 addAll(traversePath(path, runningAnswer, false))
                 doingSimpleTempConversion = true
             } else {
+                Log.d(TAG, "convert: simple conversion")
                 for (path in findPathsBetween(left, right, true)) {
                     addAll(traversePath(path, runningAnswer, false))
                 }
@@ -71,6 +72,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
             this
         }.getOrElse { failure ->
             if (failure !is PromotionRequiredException) throw failure
+            Log.d(TAG, "convert: promoted conversion")
             mutableListOf<Conversion>().apply {
                 for (conversion in pathToFundamentals(left, true)) {
                     add(conversion)
@@ -172,10 +174,13 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         path: List<SimpleUnit>, answer: RunningAnswer, invert: Boolean,
     ): List<Conversion> = mutableListOf<Conversion>().also { list ->
         for (index in 1 until path.size) {
-            val conversion = path[index - 1].getConversionToUnit(path[index])
-            conversion.flippedToConvertInto(path[index], invert).let {
-                list.add(it)
-                it.apply(answer)
+            val (conversion, exponent) = path[index - 1].getConversionToUnit(path[index])
+            if (exponent.absoluteValue > 1) {
+                throw PromotionRequiredException()
+            }
+            conversion.flippedToConvertInto(path[index], invert).let { flipped ->
+                list.add(flipped)
+                flipped.apply(answer)
             }
         }
     }
@@ -321,14 +326,14 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         val distance: HashMap<SimpleUnit, Int> = hashMapOf()
         distance[start] = 0
         val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
-        queue.addLast(start)
+        queue.add(start)
         while (queue.isNotEmpty()) {
             val node = queue.removeFirst()
             for (neighbor in node.getOneToOneConversions()) {
                 if (!distance.containsKey(neighbor)) {
                     distance[neighbor] = distance[node]!! + 1
                     parent[neighbor] = node
-                    queue.addLast(neighbor)
+                    queue.add(neighbor)
                 }
             }
         }

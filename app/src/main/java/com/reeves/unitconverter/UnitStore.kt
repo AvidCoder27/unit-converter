@@ -263,14 +263,14 @@ object UnitStore {
         val processed = mutableListOf<SimpleUnit>()
         if (!distance.containsKey(start)) return processed
         val queue: ArrayDeque<SimpleUnit> = ArrayDeque()
-        queue.addLast(start)
+        queue.add(start)
         while (queue.isNotEmpty()) {
             val node = queue.removeFirst()
             processed.add(node)
             for (neighbor in node.getOneToOneConversions()) {
                 if (!distance.containsKey(neighbor)) {
                     distance[neighbor] = distance[node]!! + 1
-                    queue.addLast(neighbor)
+                    queue.add(neighbor)
                 }
             }
             for (conversion in node.getComplexConversions()) {
@@ -293,7 +293,7 @@ object UnitStore {
                         }
                         distance[lonely] = distance[node]!! + complexity
                         processed.add(lonely)
-                        queue.addLast(lonely)
+                        queue.add(lonely)
                     }
                 }
             }

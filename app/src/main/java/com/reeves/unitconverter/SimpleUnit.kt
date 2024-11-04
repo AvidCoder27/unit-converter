@@ -26,13 +26,13 @@ data class SimpleUnit(
         simpleConversions.toList().map { it.getOther(this) }.filter { it.units.size == 1 }
             .map { it.units.keys.first() }
 
-    fun getConversionToUnit(other: SimpleUnit): Conversion {
+    fun getConversionToUnit(other: SimpleUnit): Pair<Conversion,Int> {
         simpleConversions.forEach {
             if (it.numerator.units.size == 1 && it.numerator.units.containsKey(other)) {
-                return it
+                return Pair(it, it.numerator.units[other]!!)
             }
             if (it.denominator.units.size == 1 && it.denominator.units.containsKey(other)) {
-                return it
+                return Pair(it, it.denominator.units[other]!!)
             }
         }
         throw IllegalStateException("The other unit `$other` cannot be converted to from this unit `$this`")

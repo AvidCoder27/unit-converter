@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.reeves.unitconverter"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.reeves.unitconverter"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 6
         versionName = "0.1.1"
 

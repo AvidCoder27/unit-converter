@@ -223,8 +223,8 @@
     "conversions": [
         "1000 mrad = 1 radian",
         "knot = nautical mile / hour",
-        "planck constant = 6.62607015e−34 joules / Hz",
-        "boltzmann constant = 1.380649e−23 joules / kelvin",
+        "planck constant = 6.62607015e-34 joules / Hz",
+        "boltzmann constant = 1.380649e-23 joules / kelvin",
         "henry = Wb / A",
         "10000 gauss = 1 tesla",
         "tesla = Wb / m^2",

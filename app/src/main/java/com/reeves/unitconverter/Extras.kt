@@ -105,21 +105,21 @@ fun Int.toSubscript(): String {
 }
 
 @Throws(InvalidUnitsException::class)
-fun String.parseUnitsToStringMap(): Map<String, Int> = mutableMapOf<String, Int>().also {
+fun String.parseUnitsToStringMap(): Map<String, Int> = mutableMapOf<String, Int>().also { map ->
     Regex("([,*/]?\\s*(?:[\\w-\\[\\]()]+\\s*)+\\^?\\d*)").findAll(this).forEach { matchResult ->
         val term = matchResult.value.trim()
         val parts = term.split("^")
         val unit = parts[0].replace("*", "").replace("/", "").replace(",", "").trim()
         val exponent = parts.getOrNull(1)?.toIntOrNull() ?: 1
         val sign = if (term.startsWith("/")) -1 else 1
-        it[unit] = (it[unit] ?: 0) + sign * exponent
+        map[unit] = (map[unit] ?: 0) + sign * exponent
     }
 }.also {
     if (it.isEmpty()) throw InvalidUnitsException(this)
 }
 
 fun String.extractValue(): Pair<Double, String> {
-    val regex = Regex("^\\s*([-+]?\\d+(?:\\.\\d+)?(?:[eE][-+]?\\d+)?)")
+    val regex = Regex("^\\s*([-+]?\\d+(?:\\.\\d+)?(?:[eE][-+−]?\\d+)?)")
     return regex.find(this).let {
         if (it == null) Pair(1.0, this.trim())
         else Pair(it.value.trim().toDouble(), substring(it.range.last + 1).trim())

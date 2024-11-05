@@ -31,6 +31,10 @@ data class ChemicalCompound(
             Quantity(1.0, mapOf(molesOfThis to 1))
         )
     }
+
+    override fun toString(): String {
+        return "[$formula]"
+    }
 }
 
 object ChemicalParser {
@@ -132,7 +136,7 @@ object ChemicalParser {
         return null  // Return null if no matching closing parenthesis is found.
     }
 
-    private val elements = mutableMapOf(
+    private val elements = mapOf(
         "H" to ChemicalElement("Hydrogen", "H", 1, 1.008),
         "He" to ChemicalElement("Helium", "He", 2, 4.0026),
         "Li" to ChemicalElement("Lithium", "Li", 3, 6.94),

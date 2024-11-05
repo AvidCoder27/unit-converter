@@ -2,6 +2,8 @@ package com.reeves.unitconverter
 
 data class Dimensionality(val map: Map<DIMENSION, Int>) {
     fun removeNumberDimension() = this.map.clean().filterKeys { it != DIMENSION.NUMBER }
+
+    fun getDimension(dimension: DIMENSION) = map[dimension] ?: 0
 }
 
 enum class DIMENSION {

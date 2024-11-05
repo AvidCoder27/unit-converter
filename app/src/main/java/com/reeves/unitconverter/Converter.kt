@@ -27,16 +27,52 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         endingDenominatorString: String,
     ) {
         finalValue = null
-        val unvalidatedLeft =
-            startingNumeratorString.intoQuantity().divide(startingDenominatorString.intoQuantity())
-                .removeValue().clean()
-        val right =
-            endingNumeratorString.intoQuantity().divide(endingDenominatorString.intoQuantity())
-                .removeValue().clean()
+
+        val (startingNumerator, startingNumeratorCompounds) = startingNumeratorString.intoQuantityAndChemical()
+        val (startingDenominator, startingDenominatorCompounds) = startingDenominatorString.intoQuantityAndChemical()
+        val (endingNumerator, endingNumeratorCompounds) = endingNumeratorString.intoQuantityAndChemical()
+        val (endingDenominator, endingDenominatorCompounds) = endingDenominatorString.intoQuantityAndChemical()
+
+        val (indexOfCompound, singularCompound) = listOf(
+            startingNumeratorCompounds,
+            startingDenominatorCompounds,
+            endingNumeratorCompounds,
+            endingDenominatorCompounds
+        ).validateSingleElementList()
+
+        val unvalidatedLeft = startingNumerator.divide(startingDenominator).removeValue().clean()
+        val unvalidatedRight = endingNumerator.divide(endingDenominator).removeValue().clean()
         Log.d(TAG, "convert: left = `$unvalidatedLeft`")
-        Log.d(TAG, "convert: right = `$right`")
-        val flip = validateConversion(unvalidatedLeft, right)
-        val left = if (flip) unvalidatedLeft.inverse() else unvalidatedLeft
+        Log.d(TAG, "convert: right = `$unvalidatedRight`")
+        Log.d(TAG, "convert: singularCompound `$singularCompound` found at index `$indexOfCompound`")
+
+        val steps = mutableListOf<Conversion>()
+
+        val grams = UnitStore.getGrams()
+        val moles = UnitStore.getMoles()
+        val (halfValidLeft, right) = when (indexOfCompound) {
+            -1 -> Pair(unvalidatedLeft, unvalidatedRight)
+            0 -> {
+                steps.add(singularCompound!!.convertToGrams())
+                Pair(unvalidatedLeft.multiply(grams), unvalidatedRight.divide(moles))
+            }
+            1 -> {
+                steps.add(singularCompound!!.convertToGrams().inverse())
+                Pair(unvalidatedLeft.divide(grams), unvalidatedRight.multiply(moles))
+            }
+            2 -> {
+                steps.add(singularCompound!!.convertToGrams().inverse())
+                Pair(unvalidatedLeft.divide(moles), unvalidatedRight.multiply(grams))
+            }
+            3 -> {
+                steps.add(singularCompound!!.convertToGrams())
+                Pair(unvalidatedLeft.multiply(moles), unvalidatedRight.divide(grams))
+            }
+            else -> throw IllegalStateException()
+        }
+
+        val flip = validateConversion(halfValidLeft, right)
+        val left = if (flip) halfValidLeft.inverse() else halfValidLeft
 
         val inputValue = try {
             inputValueString.toDouble()
@@ -51,8 +87,11 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         val (rightNumberUnits, rightNonNumberUnits) = right.splitByNumberUnits()
 
         val runningAnswer = RunningAnswer(inputValue)
+        steps.forEach {
+            it.apply(runningAnswer)
+        }
         var doingSimpleTempConversion = false
-        val steps = mutableListOf<Conversion>().runCatching {
+        steps.runCatching {
             if (left.dimensionality().map == mapOf(DIMENSION.TEMPERATURE to 1) && left.units.size == 1 && right.units.size == 1) {
                 Log.d(TAG, "convert: simple temp conversion")
                 val path = findPathsBetween(left, right, true).let {
@@ -65,10 +104,14 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
                 addAll(traversePath(path, runningAnswer, false))
                 doingSimpleTempConversion = true
             } else {
-                for (path in findPathsBetween(leftNumberUnits, rightNumberUnits, true, fillWithThings = true)) {
+                for (path in findPathsBetween(
+                    leftNumberUnits, rightNumberUnits, true, fillWithThings = true
+                )) {
                     addAll(traversePath(path, runningAnswer, false))
                 }
-                for (path in findPathsBetween(leftNumberUnits, rightNumberUnits, false, fillWithThings = true)) {
+                for (path in findPathsBetween(
+                    leftNumberUnits, rightNumberUnits, false, fillWithThings = true
+                )) {
                     addAll(traversePath(path, runningAnswer, true))
                 }
                 for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, true)) {
@@ -112,8 +155,8 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         } else {
             displayOutput(
                 dedupAndCancelOut(steps),
-                left.withValue(inputValue),
-                right.withValue(runningAnswer.value),
+                (if (flip) unvalidatedLeft.inverse() else unvalidatedLeft).withValue(inputValue),
+                unvalidatedRight.withValue(runningAnswer.value),
                 flip
             )
         }
@@ -313,7 +356,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
     }
 
     private fun findPathsBetween(
-        starts: Quantity, ends: Quantity, top: Boolean, fillWithThings: Boolean = false
+        starts: Quantity, ends: Quantity, top: Boolean, fillWithThings: Boolean = false,
     ): List<List<SimpleUnit>> = mutableListOf<List<SimpleUnit>>().also {
         val expandedEnds = ends.expand(top).toMutableList()
         val expandedStarts = starts.expand(top).toMutableList()
@@ -329,7 +372,10 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         for (start in expandedStarts) {
             val shortestPath = findFirstShortestPath(start, expandedEnds)
             if (shortestPath.isEmpty()) {
-                Log.d(TAG, "findPathsBetween: unable to convert `$start` to any of `$ends`, promotion required")
+                Log.d(
+                    TAG,
+                    "findPathsBetween: unable to convert `$start` to any of `$ends`, promotion required"
+                )
                 throw PromotionRequiredException()
             } else {
                 it.add(shortestPath)
@@ -338,7 +384,10 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         // if we were unable to convert all the starts to ends,
         // then this method fails and we promote
         if (expandedEnds.isNotEmpty()) {
-            Log.d(TAG, "findPathsBetween: unable to convert all starts (`$starts`) to ends (`$ends`), promotion required")
+            Log.d(
+                TAG,
+                "findPathsBetween: unable to convert all starts (`$starts`) to ends (`$ends`), promotion required"
+            )
             throw PromotionRequiredException()
         }
     }.toList()

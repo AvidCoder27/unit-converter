@@ -17,6 +17,8 @@ object UnitStore {
     private val conversions: MutableList<Conversion> = mutableListOf()
     private var loaded = false
     private lateinit var thing: SimpleUnit
+    private lateinit var grams: SimpleUnit
+    private lateinit var moles: SimpleUnit
 
     fun loadFromJson(context: Context) {
         loaded = true
@@ -24,6 +26,8 @@ object UnitStore {
         val jsonObject = JSONObject(jsonString)
         loadUnits(jsonObject)
         thing = getUnit("thing").keys.first()
+        grams = getUnit("grams").keys.first()
+        moles = getUnit("moles").keys.first()
         loadAliases(jsonObject)
         loadConversions(jsonObject)
         computeComplexities()
@@ -52,6 +56,16 @@ object UnitStore {
     fun getThing(): SimpleUnit {
         throwIfNotLoaded()
         return thing
+    }
+
+    fun getGrams(): SimpleUnit {
+        throwIfNotLoaded()
+        return grams
+    }
+
+    fun getMoles(): SimpleUnit {
+        throwIfNotLoaded()
+        return moles
     }
 
     private fun throwIfNotLoaded() {

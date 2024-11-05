@@ -19,10 +19,27 @@ class ImpossibleConversionException : Exception("This conversion is impossible!"
 class RequiresFlippingException :
     Exception("This conversion is impossible until one side is flipped.")
 
+class IllegalCompoundConversionException :
+    Exception("This conversion is impossible due to its chemical compounds")
+
 class MeaninglessConversionException(cause: String) :
     Exception("This conversion is meaningless because $cause")
 
 class PromotionRequiredException : Exception()
+
+fun <T> List<List<T>>.validateSingleElementList(): Pair<Int, T?> = run {
+    val multipleElementCount = count { it.size > 1 }
+    val singleElementCount = count { it.size == 1 }
+    when {
+        all { it.isEmpty() } -> Pair(-1, null)
+        singleElementCount == 1 && multipleElementCount == 0 -> {
+            val singleElementIndex = indexOfFirst { it.size == 1 }
+            Pair(singleElementIndex, this[singleElementIndex][0])
+        }
+
+        else -> throw IllegalCompoundConversionException()
+    }
+}
 
 /**
  * @throws UndefinedUnitException

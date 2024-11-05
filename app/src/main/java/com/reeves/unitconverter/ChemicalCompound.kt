@@ -15,19 +15,21 @@ data class ChemicalCompound(
     val formula: String,
     val elements: Map<ChemicalElement, Int>,
 ) {
-    private fun getMass(): Double {
+    private val mass: Double
+
+    init {
         var totalMass = 0.0
         for ((element, count) in elements) {
             totalMass += element.atomicMass * count
         }
-        return totalMass
+        mass = totalMass
     }
 
     fun convertToGrams(): Conversion {
         val list = listOf("mol [$formula]")
         val molesOfThis = SimpleUnit(list, list, list, Dimensionality(mapOf(DIMENSION.NUMBER to 1)))
         return Conversion(
-            Quantity(getMass(), mapOf(UnitStore.getUnit("grams").keys.first() to 1)),
+            Quantity(mass, mapOf(UnitStore.getGrams() to 1)),
             Quantity(1.0, mapOf(molesOfThis to 1))
         )
     }

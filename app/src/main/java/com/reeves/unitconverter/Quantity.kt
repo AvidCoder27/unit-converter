@@ -24,9 +24,11 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
 
     fun multiply(value: Double) = Quantity(this.value * value, units)
 
-    fun divide(other: Quantity) = multiply(other.inverse())
+    fun multiply(unit: SimpleUnit) = multiply(Quantity(1.0, mapOf(unit to 1)))
 
-    fun divide(unit: SimpleUnit) = divide(Quantity(1.0, mapOf(unit to 1)))
+    fun divide(unit: SimpleUnit) = multiply(Quantity(1.0, mapOf(unit to -1)))
+
+    fun divide(other: Quantity) = multiply(other.inverse())
 
     fun pow(exponent: Int) =
         Quantity(value.pow(exponent), units.mapValues { (_, power) -> power * exponent })

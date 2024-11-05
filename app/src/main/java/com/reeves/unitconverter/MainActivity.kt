@@ -105,6 +105,7 @@ class MainActivity : AppCompatActivity() {
                     is MeaninglessConversionException,
                     is RequiresFlippingException,
                     is InvalidChemicalException,
+                    is IllegalCompoundConversionException
                         -> {
                         snackBar = Snackbar.make(
                             window.decorView, "ERROR: ${e.message}", Snackbar.LENGTH_INDEFINITE

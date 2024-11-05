@@ -54,50 +54,28 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         var doingSimpleTempConversion = false
         val steps = mutableListOf<Conversion>().runCatching {
             if (left.dimensionality().map == mapOf(DIMENSION.TEMPERATURE to 1) && left.units.size == 1 && right.units.size == 1) {
-                Log.d(TAG, "convert: simple temp conversion")
-                val path = findPathsBetween(left, right, true).let {
-                    if (it.size != 1) {
-                        // we expect exactly one path for simple temperature conversion
-                        throw PromotionRequiredException()
-                    }
-                    it.first()
-                }
-                addAll(traversePath(path, runningAnswer, false))
+                fillStepsWithTemperatureConversion(left, right, runningAnswer)
                 doingSimpleTempConversion = true
             } else {
-                for (path in findPathsBetween(leftNumberUnits, rightNumberUnits, true, fillWithThings = true)) {
-                    addAll(traversePath(path, runningAnswer, false))
-                }
-                for (path in findPathsBetween(leftNumberUnits, rightNumberUnits, false, fillWithThings = true)) {
-                    addAll(traversePath(path, runningAnswer, true))
-                }
-                for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, true)) {
-                    addAll(traversePath(path, runningAnswer, false))
-                }
-                for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, false)) {
-                    addAll(traversePath(path, runningAnswer, true))
-                }
-                Log.d(TAG, "convert: simple conversion")
+                fillStepsWithSimpleConversion(
+                    leftNumberUnits,
+                    rightNumberUnits,
+                    runningAnswer,
+                    leftNonNumberUnits,
+                    rightNonNumberUnits
+                )
             }
-            this
+            return@runCatching this
         }.getOrElse { failure ->
             if (failure !is PromotionRequiredException) throw failure
             Log.d(TAG, "convert: promoted conversion")
-            mutableListOf<Conversion>().apply {
-                for (conversion in pathToFundamentals(leftNumberUnits, true)) {
-                    add(conversion)
-                    conversion.apply(runningAnswer)
-                }
-                for (conversion in pathToFundamentals(rightNumberUnits, false).reversed()) {
-                    add(conversion)
-                    conversion.apply(runningAnswer)
-                }
-                for (conversion in pathToFundamentals(leftNonNumberUnits, true)) {
-                    add(conversion)
-                    conversion.apply(runningAnswer)
-                }
-                for (conversion in pathToFundamentals(rightNonNumberUnits, false).reversed()) {
-                    add(conversion)
+            mutableListOf<Conversion>().also { steps ->
+                val leftNumbers = pathToFundamentals(leftNumberUnits, true)
+                val leftNormals = pathToFundamentals(leftNonNumberUnits, true)
+                val rightNumbers = pathToFundamentals(rightNumberUnits, false).reversed()
+                val rightNormals = pathToFundamentals(rightNonNumberUnits, false).reversed()
+                for (conversion in leftNumbers + leftNormals + rightNumbers + rightNormals) {
+                    steps.add(conversion)
                     conversion.apply(runningAnswer)
                 }
             }
@@ -117,6 +95,48 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
                 flip
             )
         }
+    }
+
+    private fun MutableList<Conversion>.fillStepsWithTemperatureConversion(
+        left: Quantity,
+        right: Quantity,
+        runningAnswer: RunningAnswer,
+    ) {
+        Log.d(TAG, "convert: simple temp conversion")
+        val path = findPathsBetween(left, right, true).let {
+            if (it.size != 1) {
+                // we expect exactly one path for simple temperature conversion
+                throw PromotionRequiredException()
+            }
+            it.first()
+        }
+        addAll(traversePath(path, runningAnswer, false))
+    }
+
+    private fun MutableList<Conversion>.fillStepsWithSimpleConversion(
+        leftNumberUnits: Quantity,
+        rightNumberUnits: Quantity,
+        runningAnswer: RunningAnswer,
+        leftNonNumberUnits: Quantity,
+        rightNonNumberUnits: Quantity,
+    ) {
+        for (path in findPathsBetween(
+            leftNumberUnits, rightNumberUnits, true, fillWithThings = true
+        )) {
+            addAll(traversePath(path, runningAnswer, false))
+        }
+        for (path in findPathsBetween(
+            leftNumberUnits, rightNumberUnits, false, fillWithThings = true
+        )) {
+            addAll(traversePath(path, runningAnswer, true))
+        }
+        for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, true)) {
+            addAll(traversePath(path, runningAnswer, false))
+        }
+        for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, false)) {
+            addAll(traversePath(path, runningAnswer, true))
+        }
+        Log.d(TAG, "convert: simple conversion")
     }
 
     private fun dedupAndCancelOut(conversions: List<Conversion>): Map<Conversion, Int> {
@@ -210,14 +230,13 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         if (left === right) {
             throw MeaninglessConversionException("the input and output are the same!")
         }
-        if (leftDimensionality.map.isEmpty() && rightDimensionality.map.isEmpty()) {
+        if (leftDimensionality.isEmpty() && rightDimensionality.isEmpty()) {
             throw MeaninglessConversionException("all the units cancel out!")
         }
         if (leftDimensionality.removeNumberDimension() == rightDimensionality.removeNumberDimension()) {
             return false
         }
-        if (leftDimensionality.removeNumberDimension() == rightDimensionality.removeNumberDimension()
-                .mapValues { -it.value }
+        if (leftDimensionality.removeNumberDimension() == rightDimensionality.removeNumberDimension().inverse()
         ) {
             return true
         }
@@ -313,7 +332,7 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
     }
 
     private fun findPathsBetween(
-        starts: Quantity, ends: Quantity, top: Boolean, fillWithThings: Boolean = false
+        starts: Quantity, ends: Quantity, top: Boolean, fillWithThings: Boolean = false,
     ): List<List<SimpleUnit>> = mutableListOf<List<SimpleUnit>>().also {
         val expandedEnds = ends.expand(top).toMutableList()
         val expandedStarts = starts.expand(top).toMutableList()
@@ -329,7 +348,10 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         for (start in expandedStarts) {
             val shortestPath = findFirstShortestPath(start, expandedEnds)
             if (shortestPath.isEmpty()) {
-                Log.d(TAG, "findPathsBetween: unable to convert `$start` to any of `$ends`, promotion required")
+                Log.d(
+                    TAG,
+                    "findPathsBetween: unable to convert `$start` to any of `$ends`, promotion required"
+                )
                 throw PromotionRequiredException()
             } else {
                 it.add(shortestPath)
@@ -338,7 +360,10 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
         // if we were unable to convert all the starts to ends,
         // then this method fails and we promote
         if (expandedEnds.isNotEmpty()) {
-            Log.d(TAG, "findPathsBetween: unable to convert all starts (`$starts`) to ends (`$ends`), promotion required")
+            Log.d(
+                TAG,
+                "findPathsBetween: unable to convert all starts (`$starts`) to ends (`$ends`), promotion required"
+            )
             throw PromotionRequiredException()
         }
     }.toList()

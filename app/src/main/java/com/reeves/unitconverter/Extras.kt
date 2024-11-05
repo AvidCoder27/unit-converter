@@ -42,14 +42,15 @@ fun String.intoQuantity(): Quantity {
     }
 }
 
-fun String.intoQuantityAndChemical(): Pair<Quantity, List<ChemicalCompound>> {
-    if (this.isBlank()) return Pair(Quantity(1.0, mapOf()), listOf())
-    val compounds = mutableListOf<ChemicalCompound>()
+fun String.intoQuantityWithChemicals(): Pair<Quantity, Map<ChemicalCompound, Int>> {
+    if (this.isBlank()) return Pair(Quantity(1.0, mapOf()), mapOf())
+    val compoundMap = mutableMapOf<ChemicalCompound, Int>()
     return extractValue().let { (value, text) ->
         val unitMap = mutableMapOf<SimpleUnit, Int>().also { map ->
             text.parseUnitsToStringMap().forEach { (name, unitExponent) ->
                 if (name.startsWith('[') && name.endsWith(']')) {
-                    compounds.add(ChemicalParser.parseFormula(name.substring(1, name.length - 1)))
+                    val compound = ChemicalParser.parseFormula(name.substring(1, name.length - 1))
+                    compoundMap[compound] = (compoundMap[compound] ?: 0) + 1
                 } else {
                     val subMap = UnitStore.getUnit(name)
                     subMap.forEach { (unit, aliasExponent) ->
@@ -58,9 +59,7 @@ fun String.intoQuantityAndChemical(): Pair<Quantity, List<ChemicalCompound>> {
                 }
             }
         }.clean()
-        Pair(
-            Quantity(value, unitMap), compounds
-        )
+        Pair(Quantity(value, unitMap), compoundMap.clean())
     }
 }
 

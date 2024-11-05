@@ -31,6 +31,14 @@ data class ChemicalCompound(
             Quantity(1.0, mapOf(molesOfThis to 1))
         )
     }
+
+    override fun equals(other: Any?): Boolean {
+        return elements == (other as? ChemicalCompound)?.elements
+    }
+
+    override fun hashCode(): Int {
+        return elements.hashCode()
+    }
 }
 
 object ChemicalParser {

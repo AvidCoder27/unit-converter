@@ -2,7 +2,7 @@ package com.reeves.unitconverter
 
 data class Conversion(val numerator: Quantity, val denominator: Quantity) {
 
-    fun inverse(): Conversion {
+    private fun inverse(): Conversion {
         return Conversion(denominator, numerator)
     }
 

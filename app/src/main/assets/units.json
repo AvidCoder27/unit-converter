@@ -16,7 +16,10 @@
             "angstrom|s; Å",
             "beard-second|s",
             "league|s",
-            "mil|s, thou"
+            "mil|s, thou",
+            "astronomical unit|s; AU, au",
+            "parsec|s; pc",
+            "light-second|s"
         ],
         [
             "t",
@@ -60,9 +63,12 @@
             "n",
             "mole|s; mol",
             "dozen",
+            "bakers dozen",
             "gross",
             "score",
-            "thing|s, particle|s, atom|s, molecule|s"
+            "thing|s, particle|s, atom|s, molecule|s",
+            "pi; π",
+            "golden ratio; e"
         ],
         [
             "L",
@@ -70,10 +76,13 @@
         ],
         [
             "r",
-            "rotation|s",
+            "rotation|s, turn|s, revolution|s, cycle|s; rev, tr, pla, cyc",
             "degree|s; deg|s",
             "radian|s; rad|s",
-            "gradian|s, gon|s, grade|s; grad|s"
+            "milliradian|s; mrad",
+            "gradian|s, gon|s, grade|s; grad|s",
+            "arcminute|s; arcmin, ′, amin",
+            "arcsecond|s; arcsec, ″, asec"
         ],
         [
             "b",
@@ -114,7 +123,6 @@
             "pint|s, US liquid pint|s, US pint|s; pt",
             "quart|s, US quart|s, US liquid quart|s; qt",
             "gallon|s, US gallon|s, US gal, US liquid gallon|s; gal|s",
-
             "imperial bushel|s",
             "imperial peck|s",
             "imperial gallon|s",
@@ -122,14 +130,16 @@
             "imperial pint|s",
             "imperial gill|s",
             "imperial fluid ounce|s, imperial ounce|s, imperial oz, imperial fl oz",
-
             "bushel|s, US bushel|s",
             "peck|s, US peck|s",
             "US dry gallon|s",
             "US dry quart|s",
             "US dry pint|s",
-
             "barrel|s, standard barrel of oil; bbl|s"
+        ],
+        [
+            "d/t",
+            "speed of light; c"
         ],
         [
             "/t",
@@ -167,21 +177,81 @@
             "torr|s",
             "bar|s",
             "millibar|s"
+        ],
+        [
+            "d / t",
+            "knot|s; kn"
+        ],
+        [
+            "m * d^2 / t^3 / I",
+            "%volt|s; %V"
+        ],
+        [
+            "m * d^2 / t^3 / I^2",
+            "%ohm|s; %Ω"
+        ],
+        [
+            "I^2 * t^4 / m / d^2",
+            "%farad|s; %Farad"
+        ],
+        [
+            "I * t",
+            "%coulomb|s; %Coulomb"
+        ],
+        [
+            "m * d^2 / t^2 / I",
+            "%weber|s; %Wb"
+        ],
+        [
+            "m / t^2 / I",
+            "%tesla|s; %T",
+            "%gauss|; %Gs"
+        ],
+        [
+            "m * d^2 / t^2 / I^2",
+            "%henry|s; %H"
+        ],
+        [
+            "m * d^2 / t^2 / T ",
+            "boltzmann constant"
+        ],
+        [
+            "m * d^2 / t",
+            "planck constant; h"
         ]
     ],
     "conversions": [
+        "1000 mrad = 1 radian",
+        "knot = nautical mile / hour",
+        "planck constant = 6.62607015e-34 joules / Hz",
+        "boltzmann constant = 1.380649e-23 joules / kelvin",
+        "henry = Wb / A",
+        "10000 gauss = 1 tesla",
+        "tesla = Wb / m^2",
+        "weber = volt * second",
+        "farad = coulomb / volt",
+        "ohm = volt / amp",
+        "volt = watt / amp",
+        "coulomb = amp * second",
+        "c = 299792458 metres/second",
+        "e = 1.618033988749894 things",
+        "pi = 3.1415926535897932384626433 things",
+        "60 arcmin = 1 degree",
+        "60 arcsec = 1 arcmin",
+        "1 au = 149597870.7 km",
+        "1 parsec = 30856775814913673 m",
+        "1 parsec = 206264.806247096 au",
+        "1 light-second = 299792458 m",
         "1 hertz = 1 /second",
-
+        "1 bakers dozen = 13 things",
         "1 K = 1.8 Ra",
         "1 °C = 1 K",
         "1 °F = 1 Ra",
         "1 °C = 1.8 °F",
-
         "mol = 6.02214076e23 things",
         "1 dozen = 12 things",
         "1 gross = 144 things",
         "1 score = 20 things",
-
         "imperial bushel = 4 imperial pecks",
         "imperial peck = 2 imperial gallons",
         "imperial gallon = 4 imperial quarts",
@@ -190,17 +260,14 @@
         "imperial gill = 5 imperial ounces",
         "imperial gallon = 160 imperial ounces",
         "imperial oz = 28.4130625 mL",
-
         "US bushel = 4 US pecks",
         "US peck = 2 US dry gallons",
         "US dry gallon = 4 US dry quarts",
         "US dry quart = 2 US dry pints",
         "US dry pint = 18.6 fl oz",
-
         "1 BOE = 5.8e6 BTU",
         "1 TOE = 41.868 gigajoules",
         "1 LOE = 38.7 megajoules",
-
         "1 barrel = 42 US gallons",
         "1 league = 3 miles",
         "1000 mil = 1 inch",
@@ -304,7 +371,6 @@
         "mph, miles per hour = miles / hour",
         "mpg, miles per gallon = miles / gallon",
         "kilowatt-hour|s, kW h, kW hr|s, kWh, kW-hr|s = kilowatt * hour",
-
         "square inch|es, sq in, sq inch|es = in^2",
         "square foot, square feet, sq ft, sq feet, sq foot = ft^2",
         "square yard|s, sq yd, sq yard|s = yd^2",
@@ -312,7 +378,6 @@
         "square meter|s, sq m, sq meter|s = m^2",
         "square kilometer|s, sq km, sq kilometer|s = km^2",
         "square centimeter|s, sq cm, sq centimeter|s = cm^2",
-
         "cubic centimeter|s, cubic cm, cu cm = cm^3",
         "cubic inch|es, cubic in, cu in = in^3",
         "cubic foot, cubic feet, cubic ft, cu ft = ft^3",

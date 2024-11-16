@@ -9,21 +9,25 @@ private const val TAG = "UnitStore"
 private const val PERCENT = "%"
 
 object UnitStore {
-    private val FUNDAMENTAL_UNIT_NAMES = setOf("m", "s", "K", "kg", "A", "mol", "cd", "rotation", "byte")
+    private val FUNDAMENTAL_UNIT_NAMES =
+        setOf("m", "s", "K", "kg", "A", "thing", "cd", "rotation", "byte")
 
     private val unitNames: HashMap<String, SimpleUnit> = HashMap()
     private val aliases: HashMap<String, SimpleUnit> = HashMap()
     private val conversions: MutableList<Conversion> = mutableListOf()
     private var loaded = false
+    private lateinit var thing: SimpleUnit
 
     fun loadFromJson(context: Context) {
         loaded = true
         val jsonString = context.assets.open("units.json").bufferedReader().use { it.readText() }
         val jsonObject = JSONObject(jsonString)
         loadUnits(jsonObject)
+        thing = getUnit("thing").keys.first()
         loadAliases(jsonObject)
         loadConversions(jsonObject)
         computeComplexities()
+        Log.i(TAG, "Loaded ${unitNames.size} units")
     }
 
     /**
@@ -37,15 +41,17 @@ object UnitStore {
         val casedName = name.lowercaseGreaterThan3()
         unitNames[casedName]?.let { return mapOf(it to 1) }
         aliases[casedName]?.let { return it.getComplexConversions().first().getOther(it).units }
-        unitNames.forEach { (key, value) ->
-            Log.e(TAG, "key: $key, value: $value")
-        }
         throw UndefinedUnitException(casedName)
     }
 
     fun getDescriptions(): List<DescribedUnit> {
         throwIfNotLoaded()
         return (unitNames + aliases).values.distinct().map { it.describe() }.sorted()
+    }
+
+    fun getThing(): SimpleUnit {
+        throwIfNotLoaded()
+        return thing
     }
 
     private fun throwIfNotLoaded() {
@@ -100,9 +106,8 @@ object UnitStore {
     private fun loadUnits(jsonObject: JSONObject) = jsonObject.getJSONArray("units").let { array ->
         for (i in 0 until array.length()) {
             val alikeUnitsArray = array.getJSONArray(i)
-            val dimensionality: Map<DIMENSION, Int> =
-                alikeUnitsArray.getString(0).parseUnitsToStringMap()
-                    .mapKeys { stringToDimension(it.key) }
+            val dimensionality = Dimensionality(alikeUnitsArray.getString(0).parseUnitsToStringMap()
+                .mapKeys { stringToDimension(it.key) })
             for (j in 1 until alikeUnitsArray.length()) {
                 val line = alikeUnitsArray.getString(j)
                 if (line.startsWith(PERCENT)) {
@@ -132,7 +137,7 @@ object UnitStore {
 
     private fun createPrefixedUnit(
         line: String,
-        dimensionality: Map<DIMENSION, Int>,
+        dimensionality: Dimensionality,
     ) {
         val (singulars, plurals, abbreviations) = line.extractNames()
         val allNames = singulars + plurals + abbreviations
@@ -180,7 +185,7 @@ object UnitStore {
         singulars: List<String>,
         plurals: List<String>,
         abbreviations: List<String>,
-        dimensionality: Map<DIMENSION, Int>,
+        dimensionality: Dimensionality,
     ): SimpleUnit {
         val names = (singulars + plurals + abbreviations)
         if (names.any { unitNames.containsKey(it) }) {
@@ -203,7 +208,7 @@ object UnitStore {
         singulars: List<String>,
         plurals: List<String>,
         abbreviations: List<String>,
-        dimensionality: Map<DIMENSION, Int>,
+        dimensionality: Dimensionality,
         map: HashMap<String, SimpleUnit>,
     ): SimpleUnit {
         val unit = SimpleUnit(singulars, plurals, abbreviations, dimensionality)

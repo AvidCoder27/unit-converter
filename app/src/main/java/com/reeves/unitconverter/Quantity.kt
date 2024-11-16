@@ -5,13 +5,14 @@ import kotlin.math.pow
 data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
     Iterable<Map.Entry<SimpleUnit, Int>> {
 
-    fun dimensionality(): Map<DIMENSION, Int> = mutableMapOf<DIMENSION, Int>().also { map ->
-        units.forEach { (unit, unitCount) ->
-            unit.dimensionality.forEach { (dimension, dimensionCount) ->
-                map[dimension] = (map[dimension] ?: 0) + unitCount * dimensionCount
+    fun dimensionality(): Dimensionality =
+        Dimensionality(mutableMapOf<DIMENSION, Int>().also { map ->
+            units.forEach { (unit, unitCount) ->
+                unit.dimensionality.map.forEach { (dimension, dimensionCount) ->
+                    map[dimension] = (map[dimension] ?: 0) + unitCount * dimensionCount
+                }
             }
-        }
-    }
+        })
 
     fun complexity(): Int = units.keys.sumOf { it.complexity } - units.size
 
@@ -46,6 +47,19 @@ data class Quantity(val value: Double, val units: Map<SimpleUnit, Int>) :
         if (positives && count > 0) List(count) { unit }
         else if (!positives && count < 0) List(-count) { unit }
         else listOf()
+    }
+
+    fun splitByNumberUnits(): Pair<Quantity, Quantity> {
+        val withMap = mutableMapOf<SimpleUnit, Int>()
+        val withoutMap = mutableMapOf<SimpleUnit, Int>()
+        units.forEach { (unit, count) ->
+            if (unit.dimensionality.map.keys == setOf(DIMENSION.NUMBER)) {
+                withMap[unit] = count
+            } else {
+                withoutMap[unit] = count
+            }
+        }
+        return Pair(Quantity(value, withMap), Quantity(value, withoutMap))
     }
 
     fun formatToString(formatter: ScientificFormatter = ScientificFormatter()) = buildString {

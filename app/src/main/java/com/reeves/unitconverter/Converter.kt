@@ -2,6 +2,7 @@ package com.reeves.unitconverter
 
 import android.util.Log
 import kotlin.math.absoluteValue
+import kotlin.math.max
 import kotlin.math.sign
 
 private const val TAG = "Converter"
@@ -46,40 +47,35 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
             else it
         }
 
+        val (leftNumberUnits, leftNonNumberUnits) = left.splitByNumberUnits()
+        val (rightNumberUnits, rightNonNumberUnits) = right.splitByNumberUnits()
+
         val runningAnswer = RunningAnswer(inputValue)
         var doingSimpleTempConversion = false
         val steps = mutableListOf<Conversion>().runCatching {
-            if (left.dimensionality() == mapOf(DIMENSION.TEMPERATURE to 1) && left.units.size == 1 && right.units.size == 1) {
-                Log.d(TAG, "convert: simple temp conversion")
-                val path = findPathsBetween(left, right, true).let {
-                    if (it.size != 1) {
-                        // we expect exactly one path for simple temperature conversion
-                        throw PromotionRequiredException()
-                    }
-                    it.first()
-                }
-                addAll(traversePath(path, runningAnswer, false))
+            if (left.dimensionality().map == mapOf(DIMENSION.TEMPERATURE to 1) && left.units.size == 1 && right.units.size == 1) {
+                fillStepsWithTemperatureConversion(left, right, runningAnswer)
                 doingSimpleTempConversion = true
             } else {
-                Log.d(TAG, "convert: simple conversion")
-                for (path in findPathsBetween(left, right, true)) {
-                    addAll(traversePath(path, runningAnswer, false))
-                }
-                for (path in findPathsBetween(left, right, false)) {
-                    addAll(traversePath(path, runningAnswer, true))
-                }
+                fillStepsWithSimpleConversion(
+                    leftNumberUnits,
+                    rightNumberUnits,
+                    runningAnswer,
+                    leftNonNumberUnits,
+                    rightNonNumberUnits
+                )
             }
-            this
+            return@runCatching this
         }.getOrElse { failure ->
             if (failure !is PromotionRequiredException) throw failure
             Log.d(TAG, "convert: promoted conversion")
-            mutableListOf<Conversion>().apply {
-                for (conversion in pathToFundamentals(left, true)) {
-                    add(conversion)
-                    conversion.apply(runningAnswer)
-                }
-                for (conversion in pathToFundamentals(right, false).reversed()) {
-                    add(conversion)
+            mutableListOf<Conversion>().also { steps ->
+                val leftNumbers = pathToFundamentals(leftNumberUnits, true)
+                val leftNormals = pathToFundamentals(leftNonNumberUnits, true)
+                val rightNumbers = pathToFundamentals(rightNumberUnits, false).reversed()
+                val rightNormals = pathToFundamentals(rightNonNumberUnits, false).reversed()
+                for (conversion in leftNumbers + leftNormals + rightNumbers + rightNormals) {
+                    steps.add(conversion)
                     conversion.apply(runningAnswer)
                 }
             }
@@ -99,6 +95,48 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
                 flip
             )
         }
+    }
+
+    private fun MutableList<Conversion>.fillStepsWithTemperatureConversion(
+        left: Quantity,
+        right: Quantity,
+        runningAnswer: RunningAnswer,
+    ) {
+        Log.d(TAG, "convert: simple temp conversion")
+        val path = findPathsBetween(left, right, true).let {
+            if (it.size != 1) {
+                // we expect exactly one path for simple temperature conversion
+                throw PromotionRequiredException()
+            }
+            it.first()
+        }
+        addAll(traversePath(path, runningAnswer, false))
+    }
+
+    private fun MutableList<Conversion>.fillStepsWithSimpleConversion(
+        leftNumberUnits: Quantity,
+        rightNumberUnits: Quantity,
+        runningAnswer: RunningAnswer,
+        leftNonNumberUnits: Quantity,
+        rightNonNumberUnits: Quantity,
+    ) {
+        for (path in findPathsBetween(
+            leftNumberUnits, rightNumberUnits, true, fillWithThings = true
+        )) {
+            addAll(traversePath(path, runningAnswer, false))
+        }
+        for (path in findPathsBetween(
+            leftNumberUnits, rightNumberUnits, false, fillWithThings = true
+        )) {
+            addAll(traversePath(path, runningAnswer, true))
+        }
+        for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, true)) {
+            addAll(traversePath(path, runningAnswer, false))
+        }
+        for (path in findPathsBetween(leftNonNumberUnits, rightNonNumberUnits, false)) {
+            addAll(traversePath(path, runningAnswer, true))
+        }
+        Log.d(TAG, "convert: simple conversion")
     }
 
     private fun dedupAndCancelOut(conversions: List<Conversion>): Map<Conversion, Int> {
@@ -186,20 +224,22 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
     }
 
     private fun validateConversion(left: Quantity, right: Quantity): Boolean {
-        val leftDimensionality = left.dimensionality().clean()
-        val rightDimensionality = right.dimensionality().clean()
+        val leftDimensionality = left.dimensionality()
+        val rightDimensionality = right.dimensionality()
         Log.d(TAG, "validateConversion: left: $leftDimensionality, right: $rightDimensionality")
         if (left === right) {
             throw MeaninglessConversionException("the input and output are the same!")
         }
-        if (leftDimensionality.isEmpty() || rightDimensionality.isEmpty()) {
+        if (leftDimensionality.isEmpty() && rightDimensionality.isEmpty()) {
             throw MeaninglessConversionException("all the units cancel out!")
         }
-        if (leftDimensionality == rightDimensionality.mapValues { -it.value }) {
-            return true
-            //throw RequiresFlippingException()
+        if (leftDimensionality.removeNumberDimension() == rightDimensionality.removeNumberDimension()) {
+            return false
         }
-        if (leftDimensionality == rightDimensionality) return false
+        if (leftDimensionality.removeNumberDimension() == rightDimensionality.removeNumberDimension().inverse()
+        ) {
+            return true
+        }
         throw ImpossibleConversionException()
     }
 
@@ -230,17 +270,25 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
                 katexSteps.appendAddingConversion(runningAnswer, kelvin, -ADD_TO_CELSIUS, celsius)
                 putAnswerAgainAtEnd = false
             } else if (denominator == fahrenheit && numerator == rankine) {
-                katexSteps.appendAddingConversion(runningAnswer, fahrenheit, ADD_TO_FAHRENHEIT, rankine)
+                katexSteps.appendAddingConversion(
+                    runningAnswer, fahrenheit, ADD_TO_FAHRENHEIT, rankine
+                )
                 putAnswerAgainAtEnd = false
             } else if (denominator == rankine && numerator == fahrenheit) {
-                katexSteps.appendAddingConversion(runningAnswer, rankine, -ADD_TO_FAHRENHEIT, fahrenheit)
+                katexSteps.appendAddingConversion(
+                    runningAnswer, rankine, -ADD_TO_FAHRENHEIT, fahrenheit
+                )
                 putAnswerAgainAtEnd = false
             } else if (denominator == celsius && numerator == fahrenheit) {
                 katexSteps.appendCelsiusToFahrenheit(runningAnswer)
             } else if (denominator == fahrenheit && numerator == celsius) {
                 katexSteps.appendFahrenheitToCelsius(runningAnswer)
             } else {
-                katexSteps.appendValueAndUnits(Quantity(runningAnswer.value, mapOf(denominator to 1)))
+                katexSteps.appendValueAndUnits(
+                    Quantity(
+                        runningAnswer.value, mapOf(denominator to 1)
+                    )
+                )
                 katexSteps.appendConversion(step, 1)
                 step.apply(runningAnswer)
             }
@@ -284,19 +332,40 @@ class Converter(private val outputValue: MathView, private val conversionSteps: 
     }
 
     private fun findPathsBetween(
-        starts: Quantity, ends: Quantity, top: Boolean,
+        starts: Quantity, ends: Quantity, top: Boolean, fillWithThings: Boolean = false,
     ): List<List<SimpleUnit>> = mutableListOf<List<SimpleUnit>>().also {
         val expandedEnds = ends.expand(top).toMutableList()
-        for (start in starts.expand(top)) {
+        val expandedStarts = starts.expand(top).toMutableList()
+        if (fillWithThings) {
+            val lim = max(expandedStarts.size, expandedEnds.size)
+            while (expandedEnds.size < lim) {
+                expandedEnds.add(UnitStore.getThing())
+            }
+            while (expandedStarts.size < lim) {
+                expandedStarts.add(UnitStore.getThing())
+            }
+        }
+        for (start in expandedStarts) {
             val shortestPath = findFirstShortestPath(start, expandedEnds)
             if (shortestPath.isEmpty()) {
+                Log.d(
+                    TAG,
+                    "findPathsBetween: unable to convert `$start` to any of `$ends`, promotion required"
+                )
                 throw PromotionRequiredException()
+            } else {
+                it.add(shortestPath)
             }
-            it.add(shortestPath)
         }
         // if we were unable to convert all the starts to ends,
         // then this method fails and we promote
-        if (expandedEnds.isNotEmpty()) throw PromotionRequiredException()
+        if (expandedEnds.isNotEmpty()) {
+            Log.d(
+                TAG,
+                "findPathsBetween: unable to convert all starts (`$starts`) to ends (`$ends`), promotion required"
+            )
+            throw PromotionRequiredException()
+        }
     }.toList()
 
     private fun findFirstShortestPath(

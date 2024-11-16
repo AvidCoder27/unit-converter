@@ -140,7 +140,7 @@ class KatexStringBuilder {
         action(first)
             .replace("μ", "}\\mu \\text{")
             .replace("°", "\\degree ")
-            .replace("pi", "}\\pi \\text{")
+            .replace(Regex("\\bpi\\b"), "π")
             .replace("π", "}\\pi \\text{")
     }}" + if (second != 1) "^{$second}" else ""
 }
